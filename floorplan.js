@@ -112,8 +112,8 @@
   //   DEMO_CSV_URL  <- "Kid Demographics" tab
   //   ROOMS_CSV_URL <- "Rooms" tab (Room, Capacity, Notes columns; "Room" matched
   //                    the same way the Location column is, e.g. "213", "Annex A")
-  var KIDS_CSV_URL  = "PASTE_MASTER_KIDS_PUBLISHED_CSV_LINK_HERE";
-  var DEMO_CSV_URL  = "PASTE_KID_DEMOGRAPHICS_PUBLISHED_CSV_LINK_HERE";
+  var KIDS_CSV_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdJiH5iDHu2UgeZkPtzBWYq7NWn57DsXteYL6NFNkfCmEWmDIxqUAcCwokBObwozxOaUh-dCEf9Gcx/pub?gid=528702078&single=true&output=csv";
+  var DEMO_CSV_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdJiH5iDHu2UgeZkPtzBWYq7NWn57DsXteYL6NFNkfCmEWmDIxqUAcCwokBObwozxOaUh-dCEf9Gcx/pub?gid=617467103&single=true&output=csv";
   var ROOMS_CSV_URL = "PASTE_ROOMS_TAB_PUBLISHED_CSV_LINK_HERE";
 
   // Ordered grade ladder used to turn a free-text age/grade tag ("3rd - 5th grades",
