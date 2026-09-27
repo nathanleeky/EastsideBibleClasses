@@ -70,6 +70,9 @@
     { id:"corr157", name:"", use:"service", r:[599,618,231,61] },
     { id:"corr158", name:"", use:"service", r:[599,368,50,372] },
 
+    // Detached duplex across the street (we rent one side for classes). Not to scale or position.
+    { id:"apartments", name:"Apartments", aka:["apartment","appartments","appartment","apts","apt","duplex","the apartments"], use:"class", r:[440,80,250,170], at:[565,172] },
+
     // Existing annex (north building). Rename these once we know what each room is called.
     { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
     { id:"annex1b", name:"", use:"service", r:[950,221,82,39] },
@@ -87,7 +90,8 @@
   var SLABS = [
     [[418,339],[830,339],[830,330],[948,330],[948,400],[1540,400],[1540,1284],[950,1284],[950,809],[777,809],[777,905],[476,905],[476,809],[418,809]],
     [[945,64],[1339,64],[1339,262],[945,262]],
-    [[870,262],[948,262],[948,330],[870,330]]
+    [[870,262],[948,262],[948,330],[870,330]],
+    [[440,80],[690,80],[690,250],[440,250]]
   ];
   // Covered drop-offs (dashed, decorative)
   var CANOPIES = [ [530,905,270,230] ];
@@ -202,6 +206,9 @@
       if(used) h.push('<polygon points="'+pts(r.p)+'" fill="#3fa1a6" opacity=".35" filter="url(#fpglow)"/>');
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
+    // caption for the detached apartment
+    h.push('<text x="565" y="272" text-anchor="middle" font-size="11" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">ACROSS THE STREET (DUPLEX)</text>');
+
     // mark the upper-floor block
     h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
     h.push('<rect x="1180" y="364" width="126" height="24" rx="12" fill="#e8a33d"/><text x="1243" y="381" text-anchor="middle" font-size="12" font-weight="700" fill="#141b24" font-family="system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
@@ -232,7 +239,7 @@
       h.push('<text x="'+room.at[0]+'" y="'+(y0 - 30)+'" text-anchor="middle" font-size="11" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
       list.forEach(function(c, i){
         var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1;
-        var title = c.name || c.kind || "Class";
+        var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind ? c.kind + " (TBD)" : "Class");
         if(title.length > 28) title = title.slice(0, 26) + "\u2026";
         h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
           '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2"/>' +
