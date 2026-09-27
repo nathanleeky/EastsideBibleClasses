@@ -13,12 +13,13 @@
   //   name: label drawn on the map
   //   aka:  other names the sheet's Location column might use (case/spacing ignored)
   //   r:    [x, y, width, height]  or  p: [[x,y], ...] polygon
-  //   use:  "class" (can host a class) | "service" (restrooms, stairs, mech; drawn dim, never matched)
+  //   use:  "class" (a classroom) | "space" (lobby, nursery, etc.: can host a class but drawn darker)
+  //         | "service" (restrooms, stairs, mech; darkest, never matched)
   //   at:   [x, y] where the label/pins go (defaults to center)
   // ---------------------------------------------------------------------------
   var ROOMS = [
     // Auditorium wing
-    { id:"auditorium", name:"Auditorium", aka:["aud","main auditorium","sanctuary","117"], use:"class",
+    { id:"auditorium", name:"Auditorium", aka:["aud","main auditorium","sanctuary","117"], use:"space",
       p:[[947,840],[1540,840],[1540,1146],[1488,1146],[1417,1172],[1394,1221],[1099,1221],[1087,1172],[1004,1146],[947,1146]], at:[1243,1000] },
     { id:"pulpit", name:"Pulpit", use:"service", p:[[1110,1188],[1383,1188],[1394,1221],[1099,1221]], at:[1246,1206] },
     { id:"baptistry", name:"", use:"service", r:[1159,1221,178,62] },
@@ -47,7 +48,7 @@
     { id:"mech201", name:"Mech / Util", use:"service", p:[[952,733],[1537,733],[1537,840],[1445,808],[1222,775],[952,840]], floor:2 },
 
     // Rear lobby + link to annex
-    { id:"rearlobby", name:"Rear Lobby", aka:["rear lobby","141"], use:"class", r:[835,330,113,349], at:[905,505] },
+    { id:"rearlobby", name:"Rear Lobby", aka:["rear lobby","141"], use:"space", r:[835,330,113,349], at:[905,505] },
     { id:"rearentry", name:"", use:"service", r:[870,262,78,68] },
     { id:"women144", name:"Women", use:"service", r:[835,679,115,71] },
     { id:"jan143", name:"", use:"service", r:[868,750,82,59] },
@@ -56,14 +57,14 @@
     { id:"lc165", name:"Large Classroom 165", aka:["large classroom 165","classroom 165","room 165","165"], use:"class", r:[425,404,174,159] },
     { id:"lc164", name:"Large Classroom 164", aka:["large classroom 164","classroom 164","room 164","164"], use:"class", r:[420,570,179,170] },
     { id:"lc163", name:"Large Classroom 163", aka:["large classroom 163","classroom 163","room 163","163"], use:"class", r:[649,340,181,167] },
-    { id:"resource", name:"Resource Room", aka:["resource room","resource","162"], use:"class", r:[649,509,181,109] },
+    { id:"resource", name:"Resource Room", aka:["resource room","resource","162"], use:"space", r:[649,509,181,109] },
     { id:"mail", name:"Mail Room", use:"service", r:[649,679,118,61] },
     { id:"stor161", name:"", use:"service", r:[769,679,61,61] },
-    { id:"an154", name:"Nursery 154", aka:["additional nursery 154","add'l nursery 154","nursery 154","154"], use:"class", r:[521,740,80,69] },
-    { id:"an148", name:"Nursery 148", aka:["additional nursery 148","add'l nursery 148","nursery 148","148"], use:"class", r:[649,740,59,69] },
+    { id:"an154", name:"Nursery 154", aka:["additional nursery 154","add'l nursery 154","nursery 154","154"], use:"space", r:[521,740,80,69] },
+    { id:"an148", name:"Nursery 148", aka:["additional nursery 148","add'l nursery 148","nursery 148","148"], use:"space", r:[649,740,59,69] },
     { id:"men153", name:"Men", use:"service", r:[420,740,101,69] },
     { id:"women145", name:"Women", use:"service", r:[708,740,122,69] },
-    { id:"westlobby", name:"West Lobby", aka:["west lobby","lobby 155","155"], use:"class",
+    { id:"westlobby", name:"West Lobby", aka:["west lobby","lobby 155","155"], use:"space",
       p:[[476,809],[777,809],[777,850],[745,850],[745,890],[710,905],[560,905],[530,890],[520,850],[476,850]], at:[627,857] },
     { id:"stair167", name:"", use:"service", r:[425,368,170,34] },
     { id:"corr159", name:"", use:"service", r:[420,340,229,28] },
@@ -74,16 +75,16 @@
     { id:"apartments", name:"Apartments", aka:["apartment","appartments","appartment","apts","apt","duplex","the apartments"], use:"class", r:[440,80,250,170], at:[565,172] },
 
     // Existing annex (north building). Rename these once we know what each room is called.
-    { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
+    { id:"annex1", name:"Annex A", aka:["annex a"], use:"space", r:[950,69,82,150] },
     { id:"annex1b", name:"", use:"service", r:[950,221,82,39] },
-    { id:"annex2", name:"Annex B", aka:["annex b"], use:"class", r:[1034,69,132,75] },
-    { id:"annex3", name:"Annex C", aka:["annex c"], use:"class", r:[1059,146,107,84] },
+    { id:"annex2", name:"Annex B", aka:["annex b"], use:"space", r:[1034,69,132,75] },
+    { id:"annex3", name:"Annex C", aka:["annex c"], use:"space", r:[1059,146,107,84] },
     { id:"annex-rr", name:"", use:"service", r:[1059,232,107,28] },
-    { id:"annex4", name:"Annex D", aka:["annex d"], use:"class", r:[1168,69,75,75] },
-    { id:"annex5", name:"Annex E", aka:["annex e"], use:"class", r:[1168,146,75,114] },
-    { id:"annex6", name:"Annex F", aka:["annex f"], use:"class", r:[1270,69,64,75] },
-    { id:"annex7", name:"Annex G", aka:["annex g"], use:"class", r:[1270,146,64,54] },
-    { id:"annex8", name:"Annex H", aka:["annex h"], use:"class", r:[1270,203,64,57] }
+    { id:"annex4", name:"Annex D", aka:["annex d"], use:"space", r:[1168,69,75,75] },
+    { id:"annex5", name:"Annex E", aka:["annex e"], use:"space", r:[1168,146,75,114] },
+    { id:"annex6", name:"Annex F", aka:["annex f"], use:"space", r:[1270,69,64,75] },
+    { id:"annex7", name:"Annex G", aka:["annex g"], use:"space", r:[1270,146,64,54] },
+    { id:"annex8", name:"Annex H", aka:["annex h"], use:"space", r:[1270,203,64,57] }
   ];
 
   // Building outlines (drawn under the rooms as the "slab")
@@ -115,13 +116,13 @@
   function findRoom(loc){
     var n = norm(loc); if(!n) return null;
     for(var i = 0; i < ROOMS.length; i++){
-      var r = ROOMS[i]; if(r.use !== "class") continue;
+      var r = ROOMS[i]; if(r.use === "service") continue;
       if(r.keys.indexOf(n) > -1) return r;
     }
     // fall back: a room number mentioned anywhere ("Rm 163", "163 - large classroom")
     var num = /\b([12]\d\d)\b/.exec(n);
     if(num) for(var j = 0; j < ROOMS.length; j++){
-      if(ROOMS[j].use === "class" && ROOMS[j].keys.indexOf(num[1]) > -1) return ROOMS[j];
+      if(ROOMS[j].use !== "service" && ROOMS[j].keys.indexOf(num[1]) > -1) return ROOMS[j];
     }
     return null;
   }
@@ -167,7 +168,7 @@
       '<div class="fp-wrap">' +
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#2a3441"></i>Room</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
+          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#252e39;border:1px solid #3a4757;box-sizing:border-box"></i>Other space</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
         '<div class="fp-scroll"></div>' +
         '<div class="fp-detail" id="ebc-fp-detail">Tap a pin for class details.</div>' +
         '<div class="fp-off" id="ebc-fp-off"></div>' +
@@ -202,7 +203,7 @@
     // rooms
     ROOMS.forEach(function(r){
       var used = !!byRoom[r.id];
-      var fill = r.use === "service" ? "#1f2833" : (used ? "#2f6f73" : "#2a3441");
+      var fill = used ? "#2f6f73" : ({ "class":"#3a4a5e", "space":"#252e39", "service":"#1a2129" })[r.use];
       if(used) h.push('<polygon points="'+pts(r.p)+'" fill="#3fa1a6" opacity=".35" filter="url(#fpglow)"/>');
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
@@ -225,10 +226,10 @@
     // room labels (skip rooms that have pins; the pin shows the room name instead)
     ROOMS.forEach(function(r){
       if(!r.name || byRoom[r.id]) return;
-      var big = r.use === "class";
+      var big = r.use !== "service";
       var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
       var fs = Math.max(7, Math.min(big ? 13 : 10, (wid - 10) / (r.name.length * 0.72)));
-      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif" letter-spacing=".5">'+esc(r.name.toUpperCase())+'</text>');
+      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif" letter-spacing=".5">'+esc(r.name.toUpperCase())+'</text>');
     });
 
     // pins
