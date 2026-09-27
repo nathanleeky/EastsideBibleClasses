@@ -72,7 +72,10 @@
     { id:"corr158", name:"", use:"service", r:[599,368,50,372] },
 
     // Detached duplex across the street (we rent one side for classes). Not to scale or position.
-    { id:"apartments", name:"Apartments", aka:["apartment","appartments","appartment","apts","apt","duplex","the apartments"], use:"class", r:[440,80,250,170], at:[565,172] },
+    { id:"apt-up", name:"Upstairs", aka:["upstairs"], use:"class", r:[430,70,213,78], apt:1 },
+    { id:"apt-living", name:"Living Room", aka:["living room","living","front room"], use:"class", r:[430,148,213,122], apt:1 },
+    { id:"apt-bed1", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[643,70,87,78], apt:1 },
+    { id:"apt-bed2", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[643,148,87,122], apt:1 },
 
     // Existing annex (north building). Rename these once we know what each room is called.
     { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
@@ -92,7 +95,7 @@
     [[418,339],[830,339],[830,330],[948,330],[948,400],[1540,400],[1540,1284],[950,1284],[950,809],[777,809],[777,905],[476,905],[476,809],[418,809]],
     [[945,64],[1339,64],[1339,262],[945,262]],
     [[870,262],[948,262],[948,330],[870,330]],
-    [[440,80],[690,80],[690,250],[440,250]]
+    [[430,70],[730,70],[730,270],[430,270]]
   ];
   // Covered drop-offs (dashed, decorative)
   var CANOPIES = [ [530,905,270,230] ];
@@ -115,6 +118,13 @@
 
   function findRoom(loc){
     var n = norm(loc); if(!n) return null;
+    var APT = /\b(ap+art?ments?|apts?|duplex)\b/;
+    if(APT.test(n)){
+      var rest = n.replace(APT, " ").replace(/\s+/g, " ").trim();
+      var apts = ROOMS.filter(function(r){ return r.apt; });
+      for(var a = 0; a < apts.length; a++) if(rest && apts[a].keys.indexOf(rest) > -1) return apts[a];
+      return apts.filter(function(r){ return r.id === "apt-living"; })[0];   // plain "Apartments" -> Living Room
+    }
     for(var i = 0; i < ROOMS.length; i++){
       var r = ROOMS[i]; if(r.use === "service") continue;
       if(r.keys.indexOf(n) > -1) return r;
@@ -208,7 +218,7 @@
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
     // caption for the detached apartment
-    h.push('<text x="565" y="272" text-anchor="middle" font-size="11" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">ACROSS THE STREET (DUPLEX)</text>');
+    h.push('<text x="580" y="292" text-anchor="middle" font-size="11" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
 
     // mark the upper-floor block
     h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
