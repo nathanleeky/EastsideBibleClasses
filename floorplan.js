@@ -72,10 +72,10 @@
     { id:"corr158", name:"", use:"service", r:[599,368,50,372] },
 
     // Detached duplex across the street (we rent one side for classes). Not to scale or position.
-    { id:"apt-up", name:"Upstairs", aka:["upstairs"], use:"class", r:[430,70,213,78], apt:1 },
-    { id:"apt-living", name:"Living Room", aka:["living room","living","front room"], use:"class", r:[430,148,213,122], apt:1 },
-    { id:"apt-bed1", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[643,70,87,78], apt:1 },
-    { id:"apt-bed2", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[643,148,87,122], apt:1 },
+    { id:"apt-up", name:"Upstairs", aka:["upstairs"], use:"class", r:[425,58,234,92], apt:1 },
+    { id:"apt-living", name:"Living Room", aka:["living room","living","front room"], use:"class", r:[425,150,234,144], apt:1 },
+    { id:"apt-bed1", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[659,58,96,92], apt:1 },
+    { id:"apt-bed2", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[659,150,96,144], apt:1 },
 
     // Existing annex (north building). Rename these once we know what each room is called.
     { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
@@ -95,7 +95,7 @@
     [[418,339],[830,339],[830,330],[948,330],[948,400],[1540,400],[1540,1284],[950,1284],[950,809],[777,809],[777,905],[476,905],[476,809],[418,809]],
     [[945,64],[1339,64],[1339,262],[945,262]],
     [[870,262],[948,262],[948,330],[870,330]],
-    [[430,70],[730,70],[730,270],[430,270]]
+    [[425,58],[755,58],[755,294],[425,294]]
   ];
   // Covered drop-offs (dashed, decorative)
   var CANOPIES = [ [530,905,270,230] ];
@@ -226,7 +226,7 @@
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
     // caption for the detached apartment
-    h.push('<text x="580" y="292" text-anchor="middle" font-size="15" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
+    h.push('<text x="590" y="316" text-anchor="middle" font-size="15" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
 
     // mark the upper-floor block
     h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
@@ -246,7 +246,7 @@
       if(!r.name || byRoom[r.id]) return;
       var big = r.use !== "service";
       var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
-      var fs = Math.max(9, Math.min(big ? 19 : 14, (wid - 10) / (r.name.length * 0.66)));
+      var fs = Math.max(9, Math.min(big ? 14 : 11, (wid - 8) / (r.name.length * 0.66)));
       h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif" letter-spacing=".5">'+esc(r.name.toUpperCase())+'</text>');
     });
 
@@ -254,17 +254,27 @@
     var pinIndex = [], pinRoom = [];
     Object.keys(byRoom).forEach(function(id){
       var room = ROOMS.filter(function(r){ return r.id === id; })[0];
-      var list = byRoom[id], gap = 66, y0 = room.at[1] - (list.length - 1) * gap / 2;
-      h.push('<text x="'+room.at[0]+'" y="'+(y0 - 32)+'" text-anchor="middle" font-size="15" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
+      var list = byRoom[id], n = list.length;
+      var xs = room.p.map(function(q){ return q[0]; }), ys = room.p.map(function(q){ return q[1]; });
+      var top = Math.min.apply(0, ys), bottom = Math.max.apply(0, ys), wid = Math.max.apply(0, xs) - Math.min.apply(0, xs);
+      // space for pins: below a title band at the top of the room
+      var areaTop = top + 30, areaBot = bottom - 6;
+      var gap = Math.max(46, Math.min(66, (areaBot - areaTop) / n));
+      var mid = Math.min((areaTop + areaBot) / 2, room.at[1] + 10);
+      var y0 = mid - (n - 1) * gap / 2 - 11;            // circle sits above its label, so nudge up
+      var titleY = Math.max(top + 19, y0 - 36);         // tag sits just above the pins, never outside the room
+      var tfs = Math.max(10, Math.min(14, (wid - 8) / (room.name.length * 0.7)));
+      h.push('<text x="'+room.at[0]+'" y="'+titleY+'" text-anchor="middle" font-size="'+tfs.toFixed(1)+'" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
       list.forEach(function(c, i){
         var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
         var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind ? c.kind + " (TBD)" : "Class");
-        if(title.length > 28) title = title.slice(0, 26) + "\u2026";
+        if(title.length > 24) title = title.slice(0, 22) + "…";
+        var lfs = Math.max(13, Math.min(16, (wid + 36) / (title.length * 0.58)));
         h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
-          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="18" fill="#10161d" stroke="#9fd3d6" stroke-width="2.5"/>' +
+          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2.2"/>' +
           // little open-book icon
-          '<path d="M'+(x-8)+' '+(y-4)+' q4 -3 8 0 q4 -3 8 0 v10 q-4 -3 -8 0 q-4 -3 -8 0 z M'+x+' '+(y-4)+' v10" fill="none" stroke="#e6edf3" stroke-width="1.6" stroke-linejoin="round"/>' +
-          '<text x="'+x+'" y="'+(y+38)+'" text-anchor="middle" font-size="19" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="5">'+esc(title)+'</text>' +
+          '<path d="M'+(x-7)+' '+(y-4)+' q3.5 -2.6 7 0 q3.5 -2.6 7 0 v9 q-3.5 -2.6 -7 0 q-3.5 -2.6 -7 0 z M'+x+' '+(y-4)+' v9" fill="none" stroke="#e6edf3" stroke-width="1.5" stroke-linejoin="round"/>' +
+          '<text x="'+x+'" y="'+(y + 17 + lfs)+'" text-anchor="middle" font-size="'+lfs.toFixed(1)+'" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(title)+'</text>' +
         '</g>');
       });
     });
