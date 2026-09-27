@@ -75,16 +75,16 @@
     { id:"apartments", name:"Apartments", aka:["apartment","appartments","appartment","apts","apt","duplex","the apartments"], use:"class", r:[440,80,250,170], at:[565,172] },
 
     // Existing annex (north building). Rename these once we know what each room is called.
-    { id:"annex1", name:"Annex A", aka:["annex a"], use:"space", r:[950,69,82,150] },
+    { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
     { id:"annex1b", name:"", use:"service", r:[950,221,82,39] },
-    { id:"annex2", name:"Annex B", aka:["annex b"], use:"space", r:[1034,69,132,75] },
-    { id:"annex3", name:"Annex C", aka:["annex c"], use:"space", r:[1059,146,107,84] },
+    { id:"annex2", name:"Annex B", aka:["annex b"], use:"class", r:[1034,69,132,75] },
+    { id:"annex3", name:"Annex C", aka:["annex c"], use:"class", r:[1059,146,107,84] },
     { id:"annex-rr", name:"", use:"service", r:[1059,232,107,28] },
-    { id:"annex4", name:"Annex D", aka:["annex d"], use:"space", r:[1168,69,75,75] },
-    { id:"annex5", name:"Annex E", aka:["annex e"], use:"space", r:[1168,146,75,114] },
-    { id:"annex6", name:"Annex F", aka:["annex f"], use:"space", r:[1270,69,64,75] },
-    { id:"annex7", name:"Annex G", aka:["annex g"], use:"space", r:[1270,146,64,54] },
-    { id:"annex8", name:"Annex H", aka:["annex h"], use:"space", r:[1270,203,64,57] }
+    { id:"annex4", name:"Annex D", aka:["annex d"], use:"class", r:[1168,69,75,75] },
+    { id:"annex5", name:"Annex E", aka:["annex e"], use:"class", r:[1168,146,75,114] },
+    { id:"annex6", name:"Annex F", aka:["annex f"], use:"class", r:[1270,69,64,75] },
+    { id:"annex7", name:"Annex G", aka:["annex g"], use:"class", r:[1270,146,64,54] },
+    { id:"annex8", name:"Annex H", aka:["annex h"], use:"class", r:[1270,203,64,57] }
   ];
 
   // Building outlines (drawn under the rooms as the "slab")
@@ -168,7 +168,7 @@
       '<div class="fp-wrap">' +
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#252e39;border:1px solid #3a4757;box-sizing:border-box"></i>Other space</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
+          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#1e252e;border:1px solid #3a4757;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
         '<div class="fp-scroll"></div>' +
         '<div class="fp-detail" id="ebc-fp-detail">Tap a pin for class details.</div>' +
         '<div class="fp-off" id="ebc-fp-off"></div>' +
@@ -203,7 +203,7 @@
     // rooms
     ROOMS.forEach(function(r){
       var used = !!byRoom[r.id];
-      var fill = used ? "#2f6f73" : ({ "class":"#3a4a5e", "space":"#252e39", "service":"#1a2129" })[r.use];
+      var fill = used ? "#2f6f73" : (r.use === "class" ? "#3a4a5e" : "#1e252e");
       if(used) h.push('<polygon points="'+pts(r.p)+'" fill="#3fa1a6" opacity=".35" filter="url(#fpglow)"/>');
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
