@@ -28,26 +28,23 @@
     { id:"commprep", name:"Comm. Prep", use:"service", r:[1488,1146,49,109] },
     { id:"hall-south", name:"", use:"service", r:[950,1255,587,29] },
 
-    // Main lobby + nurseries
-    { id:"lobby", name:"Main Lobby", aka:["main lobby","foyer","129"], use:"class", r:[945,558,595,121], at:[1243,618] },
-    { id:"nursery1", name:"Nursery 1", aka:["nursery 1","nursery one","124"], use:"class",
-      p:[[1075,679],[1222,679],[1222,775],[1075,817]] },
-    { id:"nursery2", name:"Nursery 2", aka:["nursery 2","nursery two","121"], use:"class",
-      p:[[1270,679],[1397,679],[1397,808],[1270,775]] },
-    { id:"sound", name:"Sound", aka:["sound room","127"], use:"service", p:[[1002,721],[1075,721],[1075,817],[1002,837]] },
-    { id:"family", name:"", use:"service", r:[999,684,76,37] },
-    { id:"rest-east", name:"Restrooms", use:"service", r:[1397,679,93,141] },
-
-    // Office row
-    { id:"office137", name:"Office", use:"service", r:[1036,400,121,62] },
-    { id:"office136", name:"Office", use:"service", r:[1157,400,113,62] },
-    { id:"secretary", name:"Secretary", use:"service", r:[1036,462,118,65] },
-    { id:"office135", name:"Office", use:"service", r:[1174,465,96,59] },
-    { id:"library", name:"Library", aka:["library","134"], use:"class", r:[1273,400,93,127] },
-    { id:"elders", name:"Elders Rm.", aka:["elders room","elders meeting room","elders meet rm","133"], use:"class", r:[1371,400,85,127] },
-    { id:"stair-w", name:"", use:"service", r:[957,400,68,158] },
-    { id:"stair-e", name:"", use:"service", r:[1456,400,79,158] },
-    { id:"corr130", name:"", use:"service", r:[1025,527,431,31] },
+    // UPPER FLOOR classroom block (sheet A-0.3 upper floor), drawn in place of the ground-floor
+    // offices/lobby/nurseries it sits above. Those ground-floor rooms aren't used for classes.
+    { id:"c208", name:"Classroom 208", aka:["classroom 208","room 208","208"], use:"class", r:[992,400,108,125], floor:2 },
+    { id:"c209", name:"Classroom 209", aka:["classroom 209","room 209","209"], use:"class", r:[1102,400,105,125], floor:2 },
+    { id:"rr-up", name:"Restrooms", use:"service", r:[1210,400,67,128], floor:2 },
+    { id:"c210", name:"Classroom 210", aka:["classroom 210","room 210","210"], use:"class", r:[1280,400,105,125], floor:2 },
+    { id:"c211", name:"Classroom 211", aka:["classroom 211","room 211","211"], use:"class", r:[1387,400,108,125], floor:2 },
+    { id:"stair-uw", name:"", use:"service", r:[957,400,35,150], floor:2 },
+    { id:"stair-ue", name:"", use:"service", r:[1495,400,42,150], floor:2 },
+    { id:"corr203", name:"Corridor", use:"service", r:[957,528,580,57], floor:2 },
+    { id:"stair202", name:"Stair", use:"service", r:[977,585,98,58], floor:2 },
+    { id:"c215", name:"Classroom 215", aka:["classroom 215","room 215","215"], use:"class", r:[977,643,98,90], floor:2 },
+    { id:"lc214", name:"Large Classroom 214", aka:["large classroom 214","classroom 214","room 214","214"], use:"class", r:[1075,585,167,148], floor:2 },
+    { id:"lc213", name:"Large Classroom 213", aka:["large classroom 213","classroom 213","room 213","213"], use:"class", r:[1245,585,167,148], floor:2 },
+    { id:"stair200", name:"Stair", use:"service", r:[1412,585,100,58], floor:2 },
+    { id:"c212", name:"Classroom 212", aka:["classroom 212","room 212","212"], use:"class", r:[1412,643,100,90], floor:2 },
+    { id:"mech201", name:"Mech / Util", use:"service", p:[[952,733],[1537,733],[1537,840],[1445,808],[1222,775],[952,840]], floor:2 },
 
     // Rear lobby + link to annex
     { id:"rearlobby", name:"Rear Lobby", aka:["rear lobby","141"], use:"class", r:[835,330,113,349], at:[905,505] },
@@ -118,7 +115,7 @@
       if(r.keys.indexOf(n) > -1) return r;
     }
     // fall back: a room number mentioned anywhere ("Rm 163", "163 - large classroom")
-    var num = /\b(1\d\d)\b/.exec(n);
+    var num = /\b([12]\d\d)\b/.exec(n);
     if(num) for(var j = 0; j < ROOMS.length; j++){
       if(ROOMS[j].use === "class" && ROOMS[j].keys.indexOf(num[1]) > -1) return ROOMS[j];
     }
@@ -166,7 +163,7 @@
       '<div class="fp-wrap">' +
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#2a3441"></i>Room</span></div></div>' +
+          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#2a3441"></i>Room</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
         '<div class="fp-scroll"></div>' +
         '<div class="fp-detail" id="ebc-fp-detail">Tap a pin for class details.</div>' +
         '<div class="fp-off" id="ebc-fp-off"></div>' +
@@ -205,6 +202,10 @@
       if(used) h.push('<polygon points="'+pts(r.p)+'" fill="#3fa1a6" opacity=".35" filter="url(#fpglow)"/>');
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
+    // mark the upper-floor block
+    h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
+    h.push('<rect x="1180" y="364" width="126" height="24" rx="12" fill="#e8a33d"/><text x="1243" y="381" text-anchor="middle" font-size="12" font-weight="700" fill="#141b24" font-family="system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
+
     // faint pew rows in the auditorium, for a sense of place
     var aud = ROOMS.filter(function(r){ return r.id === "auditorium"; })[0];
     h.push('<clipPath id="fpaud"><polygon points="'+pts(aud.p)+'"/></clipPath><g clip-path="url(#fpaud)" stroke="#ffffff" stroke-opacity=".07" stroke-width="3">');
