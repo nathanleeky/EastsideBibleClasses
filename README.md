@@ -1,2 +1,15 @@
-# EastsideBibleClasses
-Dashboard and platform to manage Eastside bible class planning
+# Eastside Bible Classes
+
+Live dashboard of Eastside Church of Christ Bible classes, fed from the Master Tracker Google Sheet.
+
+- `dashboard.js` – the whole dashboard (styles, layout, data loading)
+- `index.html` – preview page: https://nathanleeky.github.io/eastsidebibleclasses/
+
+## Embed (WordPress / Elementor HTML widget)
+
+```html
+<div id="ebc"></div>
+<script src="https://nathanleeky.github.io/eastsidebibleclasses/dashboard.js"></script>
+```
+
+Changes pushed to `main` go live within about a minute.
