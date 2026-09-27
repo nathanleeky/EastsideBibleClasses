@@ -103,6 +103,52 @@
   var VIEW = { x:400, y:44, w:1170, h:1256 };
 
   // ---------------------------------------------------------------------------
+  // PLANNING DATA (optional). Publish each of these three tabs to the web as CSV,
+  // the same way "Master: Adult" was published (File > Share > Publish to web >
+  // pick the tab + "Comma-separated values (.csv)" > Publish), then paste the
+  // links below. Until a link is filled in, the map just skips that piece
+  // (kids' classes, headcount, capacity/status badges) and works as before.
+  //   KIDS_CSV_URL  <- "Master: Kids" tab
+  //   DEMO_CSV_URL  <- "Kid Demographics" tab
+  //   ROOMS_CSV_URL <- "Rooms" tab (Room, Capacity, Notes columns; "Room" matched
+  //                    the same way the Location column is, e.g. "213", "Annex A")
+  var KIDS_CSV_URL  = "PASTE_MASTER_KIDS_PUBLISHED_CSV_LINK_HERE";
+  var DEMO_CSV_URL  = "PASTE_KID_DEMOGRAPHICS_PUBLISHED_CSV_LINK_HERE";
+  var ROOMS_CSV_URL = "PASTE_ROOMS_TAB_PUBLISHED_CSV_LINK_HERE";
+
+  // Ordered grade ladder used to turn a free-text age/grade tag ("3rd - 5th grades",
+  // "Middle School") into a span of Kid Demographics rows to add up.
+  var GRADES = [
+    { key:"baby1", label:"Baby 1", test:/\bbab(y|ies)\s*1\b/ },
+    { key:"baby2", label:"Baby 2", test:/\bbab(y|ies)\s*2\b/ },
+    { key:"toddler", label:"Toddler", test:/\btoddlers?\b/ },
+    { key:"preschool", label:"Preschool", test:/\bpreschool\b/ },
+    { key:"prek", label:"Pre K", test:/\bpre\s*-?\s*k\b/ },
+    { key:"k", label:"Kindergarten", test:/\bkindergarten\b/ },
+    { key:"g1", label:"1st Grade", test:/\b1st\b/ },
+    { key:"g2", label:"2nd Grade", test:/\b2nd\b/ },
+    { key:"g3", label:"3rd Grade", test:/\b3rd\b/ },
+    { key:"g4", label:"4th Grade", test:/\b4th\b/ },
+    { key:"g5", label:"5th Grade", test:/\b5th\b/ },
+    { key:"g6", label:"6th Grade", test:/\b6th\b/ },
+    { key:"g7", label:"7th Grade", test:/\b7th\b/ },
+    { key:"g8", label:"8th Grade", test:/\b8th\b/ },
+    { key:"g9", label:"9th Grade", test:/\b9th\b/ },
+    { key:"g10", label:"10th Grade", test:/\b10th\b/ },
+    { key:"g11", label:"11th Grade", test:/\b11th\b/ },
+    { key:"g12", label:"12th Grade", test:/\b12th\b/ }
+  ];
+  // Starting-point capacities from the architect's stated legal occupancy figures;
+  // edit the actual numbers on the Rooms tab once it exists -- these are just the
+  // fallback used until then (or for any room the Rooms tab doesn't mention).
+  var DEFAULT_CAP = {
+    lc163:40, lc165:40, lc164:41, lc213:33, lc214:33,
+    c208:19, c209:19, c210:19, c211:19, c212:19, c215:19,
+    auditorium:150,
+    annex1:20, annex2:20, annex3:20, annex4:20, annex5:20, annex6:20, annex7:20, annex8:20,
+    "apt-up":10, "apt-living":10, "apt-bed1":8, "apt-bed2":8
+  };
+
   var NS = "http://www.w3.org/2000/svg";
   var norm = function(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); };
   var esc = function(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
@@ -139,6 +185,115 @@
 
   function pts(p){ return p.map(function(q){ return q.join(","); }).join(" "); }
 
+  // ---------------------------------------------------------------------------
+  // Planning data: kids' classes, demographics-based headcount, room capacity.
+  // Loaded independently of the adult rows dashboard.js hands us, so the map
+  // still works with just Master: Adult if the rest hasn't been set up yet.
+  var toDate = function(s){
+    var m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(String(s).trim());
+    return m ? new Date(+m[3], +m[1]-1, +m[2]) : null;
+  };
+  function parseCSV(text){
+    var out = [], row = [], f = "", q = false;
+    for(var i = 0; i < text.length; i++){
+      var ch = text[i];
+      if(q){
+        if(ch === '"'){ if(text[i+1] === '"'){ f += '"'; i++; } else q = false; }
+        else f += ch;
+      } else if(ch === '"') q = true;
+      else if(ch === ','){ row.push(f); f = ""; }
+      else if(ch === '\n' || ch === '\r'){
+        if(ch === '\r' && text[i+1] === '\n') i++;
+        row.push(f); out.push(row); row = []; f = "";
+      } else f += ch;
+    }
+    if(f || row.length){ row.push(f); out.push(row); }
+    return out;
+  }
+  function csvObjects(text){
+    var data = parseCSV(text); if(!data.length) return { cols:[], list:[] };
+    var cols = data[0].map(function(c){ return c.trim(); });
+    var list = data.slice(1).map(function(c){
+      var o = {}; cols.forEach(function(name, i){ o[name] = (c[i] || "").trim(); }); return o;
+    }).filter(function(o){ return Object.keys(o).some(function(k){ return o[k]; }); });
+    return { cols:cols, list:list };
+  }
+
+  // A "school year" runs June - May; label it by the calendar year its June falls in,
+  // to match the Kid Demographics column headers ("2026 (June - May)").
+  function schoolYearLabel(d){ if(!d) return null; return d.getFullYear() - (d.getMonth() < 5 ? 1 : 0); }
+
+  function gradeRange(text){
+    var n = norm(text), idxs = [];
+    GRADES.forEach(function(g, i){ if(g.test.test(n)) idxs.push(i); });
+    if(!idxs.length) return null;
+    return GRADES.slice(Math.min.apply(0, idxs), Math.max.apply(0, idxs) + 1);
+  }
+  var MIDDLE = GRADES.slice(11, 14), HIGH = GRADES.slice(14, 18); // g6-g8, g9-g12
+
+  var PLAN = { kids:[], demo:null, demoCols:{}, todayLabel:schoolYearLabel(new Date()), cap:{}, loaded:0 };
+  var lastRows = null;
+
+  function headcountFor(range, label){
+    if(!range || !PLAN.demo) return null;
+    var col = PLAN.demoCols[label] || (label === PLAN.todayLabel ? "Now" : null);
+    if(!col) return null;
+    var total = 0, any = false;
+    range.forEach(function(g){
+      var v = PLAN.demo[g.key] && PLAN.demo[g.key][col];
+      if(v !== undefined && v !== ""){ total += (+v || 0); any = true; }
+    });
+    return any ? total : null;
+  }
+
+  function loadCSV(url, cb){
+    if(!url || url.indexOf("http") !== 0) return;
+    fetch(url + (url.indexOf("?") > -1 ? "&" : "?") + "_=" + Date.now(), { credentials:"omit" })
+      .then(function(r){ return r.text(); }).then(cb).catch(function(){});
+  }
+  loadCSV(KIDS_CSV_URL, function(text){
+    var t = csvObjects(text);
+    PLAN.kids = t.list.map(function(o){
+      return {
+        year:o.Year||"", q:o.Q||"", start:toDate(o.Start), end:toDate(o.End),
+        kind:"Kids: " + (o.Age||""), age:o.Age||"", teacher:o.Teachers||"", name:o["Class Name"]||"",
+        book:"", type:"", loc:o["Room #"]||"", notes:o.Notes||"", status:o.Status || "Confirmed", isKid:true
+      };
+    }).filter(function(r){ return r.year; });
+    PLAN.loaded++; if(window.EBCFloorplan) window.EBCFloorplan.refresh();
+  });
+  loadCSV(DEMO_CSV_URL, function(text){
+    var t = csvObjects(text); if(!t.cols.length) return;
+    var yearCol = t.cols[0];
+    t.cols.forEach(function(h){ var m = /\b(20\d\d)\b/.exec(h); if(m) PLAN.demoCols[+m[1]] = h; });
+    var demo = {};
+    t.list.forEach(function(row){
+      var range = gradeRange(row[yearCol]);
+      if(!range || range.length !== 1) return; // demographics rows are single grades
+      demo[range[0].key] = row;
+    });
+    PLAN.demo = demo;
+    PLAN.loaded++; if(window.EBCFloorplan) window.EBCFloorplan.refresh();
+  });
+  loadCSV(ROOMS_CSV_URL, function(text){
+    var t = csvObjects(text);
+    var cap = {};
+    t.list.forEach(function(o){
+      var room = findRoom(o.Room);
+      if(room && o.Capacity !== "") cap[room.id] = +o.Capacity || null;
+    });
+    PLAN.cap = cap;
+    PLAN.loaded++; if(window.EBCFloorplan) window.EBCFloorplan.refresh();
+  });
+  function capacityOf(id){ return PLAN.cap[id] != null ? PLAN.cap[id] : (DEFAULT_CAP[id] != null ? DEFAULT_CAP[id] : null); }
+
+  function headcountOfRow(r){
+    if(r.est){ var n = +r.est; if(n) return n; }
+    var label = schoolYearLabel(r.start);
+    var range = r.isKid ? gradeRange(r.age) : (r.kind === "Middle School" ? MIDDLE : r.kind === "High School" ? HIGH : null);
+    return range ? headcountFor(range, label) : null;
+  }
+
   var CSS = [
     "#ebc .fp-wrap{background:#141b24;border-radius:10px;padding:14px;color:#dfe6ee}",
     "#ebc .fp-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}",
@@ -161,7 +316,14 @@
     "#ebc .fp-room{transition:fill .2s}",
     "#ebc .fp-pin{cursor:pointer}",
     "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#e8a33d;stroke:#fff}",
-    "#ebc .fp-hint{margin-top:8px;font-size:12px;color:#7f8fa3}"
+    "#ebc .fp-hint{margin-top:8px;font-size:12px;color:#7f8fa3}",
+    "#ebc .fp-warn{margin:0 0 10px;font-size:12.5px;color:#e8b23d;background:#2a2213;border:1px solid #4a3a1a;border-radius:6px;padding:7px 10px}",
+    "#ebc .fp-chip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:1px 6px;border-radius:99px;margin-left:6px;vertical-align:1px}",
+    "#ebc .fp-chip.ok{background:#1e3a2c;color:#5fd692}",
+    "#ebc .fp-chip.tight{background:#3a3016;color:#e8b23d}",
+    "#ebc .fp-chip.over{background:#3a1e1e;color:#e8756b}",
+    "#ebc .fp-chip.status{background:#2a3542;color:#9fd3d6;text-transform:uppercase}",
+    "#ebc .fp-item .badges{margin-top:4px}"
   ].join("\n");
 
   function render(rows){
@@ -169,6 +331,8 @@
     if(!document.getElementById("ebc-fp-css")){
       var st = document.createElement("style"); st.id = "ebc-fp-css"; st.textContent = CSS; document.head.appendChild(st);
     }
+    lastRows = rows;
+    rows = rows.concat(PLAN.kids);
 
     // Quarters available, newest first; default to the one covering today
     var today = new Date(); today.setHours(0,0,0,0);
@@ -187,21 +351,42 @@
       '<div class="fp-wrap">' +
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#1e252e;border:1px solid #3a4757;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
+          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#1e252e;border:1px solid #3a4757;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span><span><i style="background:#5c4a22"></i>Tight fit</span><span><i style="background:#5c2b28"></i>Over capacity</span></div></div>' +
+        '<div id="ebc-fp-warn"></div>' +
         '<div class="fp-body"><div class="fp-scroll"></div><div class="fp-list" id="ebc-fp-list"></div></div>' +
         '<div class="fp-hint">Hover or tap a pin or a class to match them up.</div>' +
       '</div>';
     host.querySelector("#ebc-fp-q").addEventListener("change", function(e){
-      host.setAttribute("data-q", e.target.value.replace(/ \(now\)$/, "")); render(rows);
+      host.setAttribute("data-q", e.target.value.replace(/ \(now\)$/, "")); render(lastRows);
     });
 
-    // Classes for the chosen quarter, grouped by room
-    var byRoom = {}, unplaced = [];
+    // Classes for the chosen quarter, grouped by room, each with headcount/capacity/fit worked out
+    var byRoom = {}, unplaced = [], warnings = [];
     rows.filter(function(r){ return (r.year + " " + r.q) === sel; }).forEach(function(r){
       var room = findRoom(r.loc);
-      if(room){ (byRoom[room.id] = byRoom[room.id] || []).push(r); }
-      else unplaced.push(r);
+      r.status = r.status || "Confirmed";
+      r.headcount = headcountOfRow(r);
+      if(room){
+        r.cap = capacityOf(room.id);
+        r.fit = (r.headcount != null && r.cap != null) ? (r.headcount > r.cap ? "over" : (r.headcount >= r.cap * 0.85 ? "tight" : "ok")) : null;
+        (byRoom[room.id] = byRoom[room.id] || []).push(r);
+      } else unplaced.push(r);
     });
+    Object.keys(byRoom).forEach(function(id){
+      var room = ROOMS.filter(function(r){ return r.id === id; })[0], list = byRoom[id];
+      var total = 0, any = false;
+      list.forEach(function(c){ if(c.headcount != null){ total += c.headcount; any = true; } });
+      var cap = capacityOf(id);
+      if(any && cap != null && total > cap) warnings.push((room.name || id) + ": " + total + " expected, room seats " + cap);
+      list.forEach(function(c){
+        var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind || "Class");
+        if(c.status === "Idea" || c.status === "Planned") warnings.push(title + " (" + room.name + ") is still \"" + c.status + "\", not confirmed");
+      });
+    });
+    var mismatched = unplaced.filter(function(r){ return r.loc; }).length;
+    if(mismatched) warnings.push(mismatched + " class" + (mismatched > 1 ? "es" : "") + " list a Location that doesn't match a room on the map yet");
+    host.querySelector("#ebc-fp-warn").innerHTML = warnings.length
+      ? '<div class="fp-warn">\u26a0\ufe0f ' + warnings.map(esc).join(' &nbsp;\u00b7&nbsp; ') + '</div>' : "";
 
     var svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", [VIEW.x, VIEW.y, VIEW.w, VIEW.h].join(" "));
@@ -218,11 +403,13 @@
     SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s.map(function(q){ return [q[0]+7, q[1]+10]; }))+'" fill="#070a0e"/>'); });
     SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s)+'" fill="#1b232d" stroke="#8796a8" stroke-width="5" stroke-linejoin="round"/>'); });
 
-    // rooms
+    // rooms (tinted amber/red instead of teal when this quarter's headcount is tight/over capacity)
+    var FIT_GLOW = { ok:"#3fa1a6", tight:"#e8b23d", over:"#e8756b" }, FIT_FILL = { ok:"#2f6f73", tight:"#5c4a22", over:"#5c2b28" };
     ROOMS.forEach(function(r){
       var used = !!byRoom[r.id];
-      var fill = used ? "#2f6f73" : (r.use === "class" ? "#3a4a5e" : "#1e252e");
-      if(used) h.push('<polygon points="'+pts(r.p)+'" fill="#3fa1a6" opacity=".35" filter="url(#fpglow)"/>');
+      var worst = used ? (byRoom[r.id].some(function(c){ return c.fit === "over"; }) ? "over" : byRoom[r.id].some(function(c){ return c.fit === "tight"; }) ? "tight" : "ok") : null;
+      var fill = used ? FIT_FILL[worst] : (r.use === "class" ? "#3a4a5e" : "#1e252e");
+      if(used) h.push('<polygon points="'+pts(r.p)+'" fill="'+FIT_GLOW[worst]+'" opacity=".35" filter="url(#fpglow)"/>');
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
     // caption for the detached apartment
@@ -257,24 +444,30 @@
       var list = byRoom[id], n = list.length;
       var xs = room.p.map(function(q){ return q[0]; }), ys = room.p.map(function(q){ return q[1]; });
       var top = Math.min.apply(0, ys), bottom = Math.max.apply(0, ys), wid = Math.max.apply(0, xs) - Math.min.apply(0, xs);
-      // space for pins: below a title band at the top of the room
+      // space for pins: below a title band at the top of the room (a bit more when a
+      // headcount/status line is going to print under each pin's title)
+      var hasSub = list.some(function(c){ return c.headcount != null || c.status === "Idea" || c.status === "Planned"; });
       var areaTop = top + 30, areaBot = bottom - 6;
-      var gap = Math.max(46, Math.min(66, (areaBot - areaTop) / n));
+      var gap = Math.max(hasSub ? 62 : 46, Math.min(hasSub ? 84 : 66, (areaBot - areaTop) / n));
       var mid = Math.min((areaTop + areaBot) / 2, room.at[1] + 10);
       var y0 = mid - (n - 1) * gap / 2 - 11;            // circle sits above its label, so nudge up
-      var titleY = Math.max(top + 19, y0 - 36);         // tag sits just above the pins, never outside the room
+      var titleY = Math.max(top + 19, y0 - (hasSub ? 40 : 36)); // tag sits just above the pins, never outside the room
       var tfs = Math.max(10, Math.min(14, (wid - 8) / (room.name.length * 0.7)));
       h.push('<text x="'+room.at[0]+'" y="'+titleY+'" text-anchor="middle" font-size="'+tfs.toFixed(1)+'" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
+      var FIT_TXT = { ok:"#5fd692", tight:"#e8b23d", over:"#e8756b" };
       list.forEach(function(c, i){
         var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
         var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind ? c.kind + " (TBD)" : "Class");
-        if(title.length > 24) title = title.slice(0, 22) + "…";
+        if(title.length > 24) title = title.slice(0, 22) + "\u2026";
+        var draft = c.status === "Idea" || c.status === "Planned";
+        var sub = c.headcount != null ? (c.headcount + (c.cap != null ? " / " + c.cap : "")) + (draft ? " \u00b7 " + c.status : "") : (draft ? c.status : "");
         var lfs = Math.max(13, Math.min(16, (wid + 36) / (title.length * 0.58)));
         h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
-          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2.2"/>' +
+          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2.2"' + (draft ? ' stroke-dasharray="4 3"' : '') + '/>' +
           // little open-book icon
           '<path d="M'+(x-7)+' '+(y-4)+' q3.5 -2.6 7 0 q3.5 -2.6 7 0 v9 q-3.5 -2.6 -7 0 q-3.5 -2.6 -7 0 z M'+x+' '+(y-4)+' v9" fill="none" stroke="#e6edf3" stroke-width="1.5" stroke-linejoin="round"/>' +
           '<text x="'+x+'" y="'+(y + 17 + lfs)+'" text-anchor="middle" font-size="'+lfs.toFixed(1)+'" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(title)+'</text>' +
+          (sub ? '<text x="'+x+'" y="'+(y + 28 + lfs)+'" text-anchor="middle" font-size="10.5" font-weight="600" fill="'+(c.fit ? FIT_TXT[c.fit] : "#9aa8b8")+'" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(sub)+'</text>' : '') +
         '</g>');
       });
     });
@@ -287,8 +480,12 @@
     var item = function(c, room, i){
       var meta = [c.kind, c.teacher].filter(Boolean).join(" \u00b7 ");
       var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : "Title TBD";
+      var badges = "";
+      if(c.headcount != null) badges += '<span class="fp-chip ' + (c.fit || "ok") + '">' + c.headcount + (c.cap != null ? " / " + c.cap : "") + '</span>';
+      if(c.status && c.status !== "Confirmed" && c.status !== "Completed") badges += '<span class="fp-chip status">' + esc(c.status) + '</span>';
       return '<button type="button" class="fp-item' + (i < 0 ? ' off' : '') + '"' + (i < 0 ? '' : ' data-i="' + i + '"') + '>' +
-        '<div class="rm">' + esc(room) + '</div><div class="ti">' + esc(title) + '</div><div class="me">' + esc(meta) + '</div></button>';
+        '<div class="rm">' + esc(room) + '</div><div class="ti">' + esc(title) + '</div><div class="me">' + esc(meta) + '</div>' +
+        (badges ? '<div class="badges">' + badges + '</div>' : '') + '</button>';
     };
     list.innerHTML = (pinIndex.map(function(c, i){ return item(c, pinRoom[i], i); }).join("") +
       unplaced.map(function(c){ return item(c, "Not on map: " + (c.loc || "no location"), -1); }).join("")) ||
@@ -308,7 +505,10 @@
     });
   }
 
-  window.EBCFloorplan = { render: render, rooms: ROOMS, findRoom: findRoom };
+  window.EBCFloorplan = {
+    render: render, rooms: ROOMS, findRoom: findRoom,
+    refresh: function(){ if(lastRows) render(lastRows); }
+  };
   if(window.__ebcRows) render(window.__ebcRows);
   document.addEventListener("ebc:data", function(e){ render(e.detail); });
 })();

@@ -56,14 +56,15 @@
     var idx = function(name){ return cols.indexOf(name); };
     var I = { year:idx("Year"), q:idx("Q"), start:idx("Start"), end:idx("End"), kind:idx("Kind"),
               teacher:idx("Teacher"), name:idx("Name"), book:idx("Book"), type:idx("Type"),
-              loc:idx("Location"), notes:idx("Notes") };
+              loc:idx("Location"), notes:idx("Notes"), status:idx("Status"), est:idx("Est. Headcount") };
     if(I.year < 0 || I.kind < 0) return fail("Couldn't find the Year/Kind columns. Make sure you published the \"Master: Adult\" tab.");
     var g = function(c, k){ return I[k] > -1 ? (c[I[k]] || "").trim() : ""; };
     rows = data.slice(1).map(function(c){
       return {
         year: g(c,"year"), q: g(c,"q"), start: toDate(g(c,"start")), end: toDate(g(c,"end")),
         kind: g(c,"kind"), teacher: g(c,"teacher"), name: g(c,"name"), book: g(c,"book"),
-        type: g(c,"type"), loc: g(c,"loc"), notes: g(c,"notes")
+        type: g(c,"type"), loc: g(c,"loc"), notes: g(c,"notes"),
+        status: g(c,"status") || "Confirmed", est: g(c,"est")
       };
     }).filter(function(r){ return r.year && (r.name || r.teacher || r.kind); });
     render();
@@ -90,9 +91,10 @@
   function render(){
     var today = new Date(); today.setHours(0,0,0,0);
 
-    // Current + next quarter
-    var current = rows.filter(function(r){ return r.start && r.end && r.start <= today && today <= r.end; });
-    var future = rows.filter(function(r){ return r.start && r.start > today; })
+    // Current + next quarter (drafts still being planned - Status "Idea"/"Planned" - don't show here yet)
+    var settled = function(r){ return r.status !== "Idea" && r.status !== "Planned"; };
+    var current = rows.filter(function(r){ return settled(r) && r.start && r.end && r.start <= today && today <= r.end; });
+    var future = rows.filter(function(r){ return settled(r) && r.start && r.start > today; })
                      .sort(function(a,b){ return a.start - b.start; });
     var nextStart = future.length ? future[0].start.getTime() : null;
     var next = future.filter(function(r){ return r.start.getTime() === nextStart; });
@@ -156,7 +158,9 @@
       return true;
     }).sort(function(a,b){ return (b.start||0) - (a.start||0) || String(a.kind).localeCompare(b.kind); });
     $("ebc-rows").innerHTML = list.length ? list.map(function(r){
-      return '<tr><td>' + esc(r.year) + '</td><td>' + esc(r.q) + '</td><td>' + esc(r.kind) + '</td><td><b>' + esc(r.name) + '</b></td><td>' +
+      var draft = r.status && r.status !== "Confirmed" && r.status !== "Completed";
+      return '<tr><td>' + esc(r.year) + '</td><td>' + esc(r.q) + '</td><td>' + esc(r.kind) + '</td><td><b>' + esc(r.name) + '</b>' +
+        (draft ? ' <span class="tag" style="background:#8a5a2b">' + esc(r.status) + '</span>' : '') + '</td><td>' +
         esc(r.book) + '</td><td>' + (r.type ? '<span class="tag ' + esc(r.type) + '">' + esc(r.type) + '</span>' : '') + '</td><td>' +
         esc(r.teacher) + '</td><td>' + esc(r.notes) + '</td></tr>';
     }).join("") : '<tr><td colspan="8" class="empty">No classes match.</td></tr>';
