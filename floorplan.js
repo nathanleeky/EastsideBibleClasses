@@ -145,14 +145,23 @@
     "#ebc .fp-top select{background:#1f2833;color:#dfe6ee;border:1px solid #33404f}",
     "#ebc .fp-legend{font-size:12px;color:#9aa8b8;display:flex;gap:14px;align-items:center}",
     "#ebc .fp-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}",
+    "#ebc .fp-body{display:grid;grid-template-columns:minmax(0,640px) minmax(240px,1fr);gap:14px;align-items:start}",
     "#ebc .fp-scroll{overflow-x:auto;border-radius:8px;background:#0e141b}",
-    "#ebc .fp-scroll svg{display:block;width:100%;min-width:720px;height:auto}",
+    "#ebc .fp-scroll svg{display:block;width:100%;height:auto}",
+    "#ebc .fp-list{display:flex;flex-direction:column;gap:6px;max-height:690px;overflow-y:auto}",
+    "#ebc .fp-item{background:#1b232d;border:1px solid #2a3542;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}",
+    "#ebc .fp-item:hover,#ebc .fp-item.on{border-color:#e8a33d;background:#222c38}",
+    "#ebc .fp-item .rm{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9fd3d6}",
+    "#ebc .fp-item .ti{font-size:14px;font-weight:600;color:#f1f5f9;margin:2px 0}",
+    "#ebc .fp-item .me{font-size:12px;color:#9aa8b8}",
+    "#ebc .fp-item.off{cursor:default;opacity:.75}",
+    "#ebc .fp-item.off .rm{color:#e8a33d}",
+    "#ebc .fp-empty{font-size:13px;color:#9aa8b8;padding:8px}",
+    "@media (max-width:820px){#ebc .fp-body{grid-template-columns:1fr}#ebc .fp-scroll svg{min-width:600px;max-height:none}#ebc .fp-list{max-height:none}}",
     "#ebc .fp-room{transition:fill .2s}",
     "#ebc .fp-pin{cursor:pointer}",
     "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#e8a33d;stroke:#fff}",
-    "#ebc .fp-detail{margin-top:10px;min-height:22px;font-size:13px;color:#c9d3de}",
-    "#ebc .fp-detail b{color:#fff}",
-    "#ebc .fp-off{margin-top:8px;font-size:12px;color:#9aa8b8}"
+    "#ebc .fp-hint{margin-top:8px;font-size:12px;color:#7f8fa3}"
   ].join("\n");
 
   function render(rows){
@@ -179,9 +188,8 @@
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
           '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#1e252e;border:1px solid #3a4757;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span></div></div>' +
-        '<div class="fp-scroll"></div>' +
-        '<div class="fp-detail" id="ebc-fp-detail">Tap a pin for class details.</div>' +
-        '<div class="fp-off" id="ebc-fp-off"></div>' +
+        '<div class="fp-body"><div class="fp-scroll"></div><div class="fp-list" id="ebc-fp-list"></div></div>' +
+        '<div class="fp-hint">Hover or tap a pin or a class to match them up.</div>' +
       '</div>';
     host.querySelector("#ebc-fp-q").addEventListener("change", function(e){
       host.setAttribute("data-q", e.target.value.replace(/ \(now\)$/, "")); render(rows);
@@ -218,11 +226,11 @@
       h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
     });
     // caption for the detached apartment
-    h.push('<text x="580" y="292" text-anchor="middle" font-size="11" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
+    h.push('<text x="580" y="292" text-anchor="middle" font-size="15" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
 
     // mark the upper-floor block
     h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
-    h.push('<rect x="1180" y="364" width="126" height="24" rx="12" fill="#e8a33d"/><text x="1243" y="381" text-anchor="middle" font-size="12" font-weight="700" fill="#141b24" font-family="system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
+    h.push('<rect x="1163" y="358" width="160" height="30" rx="15" fill="#e8a33d"/><text x="1243" y="379" text-anchor="middle" font-size="16" font-weight="700" fill="#141b24" font-family="system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
 
     // faint pew rows in the auditorium, for a sense of place
     var aud = ROOMS.filter(function(r){ return r.id === "auditorium"; })[0];
@@ -238,25 +246,25 @@
       if(!r.name || byRoom[r.id]) return;
       var big = r.use !== "service";
       var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
-      var fs = Math.max(7, Math.min(big ? 13 : 10, (wid - 10) / (r.name.length * 0.72)));
+      var fs = Math.max(9, Math.min(big ? 19 : 14, (wid - 10) / (r.name.length * 0.66)));
       h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif" letter-spacing=".5">'+esc(r.name.toUpperCase())+'</text>');
     });
 
     // pins
-    var pinIndex = [];
+    var pinIndex = [], pinRoom = [];
     Object.keys(byRoom).forEach(function(id){
       var room = ROOMS.filter(function(r){ return r.id === id; })[0];
-      var list = byRoom[id], gap = 58, y0 = room.at[1] - (list.length - 1) * gap / 2;
-      h.push('<text x="'+room.at[0]+'" y="'+(y0 - 30)+'" text-anchor="middle" font-size="11" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
+      var list = byRoom[id], gap = 66, y0 = room.at[1] - (list.length - 1) * gap / 2;
+      h.push('<text x="'+room.at[0]+'" y="'+(y0 - 32)+'" text-anchor="middle" font-size="15" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
       list.forEach(function(c, i){
-        var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1;
+        var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
         var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind ? c.kind + " (TBD)" : "Class");
         if(title.length > 28) title = title.slice(0, 26) + "\u2026";
         h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
-          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2"/>' +
+          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="18" fill="#10161d" stroke="#9fd3d6" stroke-width="2.5"/>' +
           // little open-book icon
           '<path d="M'+(x-8)+' '+(y-4)+' q4 -3 8 0 q4 -3 8 0 v10 q-4 -3 -8 0 q-4 -3 -8 0 z M'+x+' '+(y-4)+' v10" fill="none" stroke="#e6edf3" stroke-width="1.6" stroke-linejoin="round"/>' +
-          '<text x="'+x+'" y="'+(y+31)+'" text-anchor="middle" font-size="13" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(title)+'</text>' +
+          '<text x="'+x+'" y="'+(y+38)+'" text-anchor="middle" font-size="19" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="5">'+esc(title)+'</text>' +
         '</g>');
       });
     });
@@ -264,25 +272,30 @@
     svg.innerHTML = h.join("");
     host.querySelector(".fp-scroll").appendChild(svg);
 
-    var detail = host.querySelector("#ebc-fp-detail");
-    function show(g){
-      [].forEach.call(svg.querySelectorAll(".fp-pin.on"), function(el){ el.classList.remove("on"); });
-      g.classList.add("on");
-      var c = pinIndex[+g.getAttribute("data-i")];
-      detail.innerHTML = '<b>' + esc(c.name || "TBD") + '</b> \u00b7 ' + esc(c.kind) +
-        (c.teacher ? ' \u00b7 ' + esc(c.teacher) : '') + (c.book && c.book !== c.name ? ' \u00b7 ' + esc(c.book) : '') +
-        (c.loc ? ' \u00b7 <span style="color:#9fd3d6">' + esc(c.loc) + '</span>' : '');
-    }
-    [].forEach.call(svg.querySelectorAll(".fp-pin"), function(g){
-      g.addEventListener("click", function(){ show(g); });
-      g.addEventListener("mouseenter", function(){ show(g); });
-      g.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); show(g); } });
-    });
+    // side list: placed classes (linked to pins) then any that aren't on the map
+    var list = host.querySelector("#ebc-fp-list");
+    var item = function(c, room, i){
+      var meta = [c.kind, c.teacher].filter(Boolean).join(" \u00b7 ");
+      var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : "Title TBD";
+      return '<button type="button" class="fp-item' + (i < 0 ? ' off' : '') + '"' + (i < 0 ? '' : ' data-i="' + i + '"') + '>' +
+        '<div class="rm">' + esc(room) + '</div><div class="ti">' + esc(title) + '</div><div class="me">' + esc(meta) + '</div></button>';
+    };
+    list.innerHTML = (pinIndex.map(function(c, i){ return item(c, pinRoom[i], i); }).join("") +
+      unplaced.map(function(c){ return item(c, "Not on map: " + (c.loc || "no location"), -1); }).join("")) ||
+      '<div class="fp-empty">No classes scheduled for this quarter yet.</div>';
 
-    host.querySelector("#ebc-fp-off").innerHTML = unplaced.length
-      ? "Not on this map: " + unplaced.map(function(c){
-          return esc(c.name || c.kind) + " (" + esc(c.loc || "no location") + ")"; }).join(" \u00b7 ")
-      : "";
+    function select(i){
+      [].forEach.call(host.querySelectorAll(".fp-pin.on,.fp-item.on"), function(el){ el.classList.remove("on"); });
+      var pin = svg.querySelector('.fp-pin[data-i="' + i + '"]'), it = list.querySelector('.fp-item[data-i="' + i + '"]');
+      if(pin) pin.classList.add("on");
+      if(it){ it.classList.add("on"); if(list.scrollHeight > list.clientHeight) it.scrollIntoView({ block:"nearest" }); }
+    }
+    [].forEach.call(host.querySelectorAll(".fp-pin,.fp-item[data-i]"), function(el){
+      var i = el.getAttribute("data-i");
+      el.addEventListener("click", function(){ select(i); });
+      el.addEventListener("mouseenter", function(){ select(i); });
+      el.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); select(i); } });
+    });
   }
 
   window.EBCFloorplan = { render: render, rooms: ROOMS, findRoom: findRoom };
