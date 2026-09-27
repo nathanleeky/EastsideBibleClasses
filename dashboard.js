@@ -9,7 +9,11 @@
   var root = document.getElementById("ebc");
   if(!root){ root = document.createElement("div"); root.id = "ebc";
     var me = document.currentScript; (me && me.parentNode ? me.parentNode.insertBefore(root, me) : document.body.appendChild(root)); }
-  root.innerHTML = "<style>\n  #ebc{--bg:#f7f6f2;--card:#fff;--ink:#1f2a33;--muted:#6b7680;--line:#e3e1da;--accent:#2f5d62;--ot:#8a5a2b;--nt:#2f5d62;--top:#6a4c93;\n    font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;color:var(--ink);background:var(--bg);padding:20px;border-radius:10px;box-sizing:border-box}\n  #ebc *{box-sizing:border-box}\n  #ebc h1{font-size:22px;margin:0 0 2px}\n  #ebc h2{font-size:15px;margin:24px 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}\n  #ebc .sub{color:var(--muted);font-size:13px}\n  #ebc .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:16px}\n  #ebc .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px}\n  #ebc .stat b{display:block;font-size:24px}\n  #ebc .stat span{font-size:12px;color:var(--muted)}\n  #ebc .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}\n  #ebc .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px}\n  #ebc .card .kind{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}\n  #ebc .card .name{font-size:17px;font-weight:600;margin:4px 0 6px}\n  #ebc .card .meta{font-size:13px;line-height:1.5}\n  #ebc .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;color:#fff;background:var(--muted)}\n  #ebc .tag.OT{background:var(--ot)} #ebc .tag.NT{background:var(--nt)} #ebc .tag.Topical{background:var(--top)}\n  #ebc .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}\n  #ebc select,#ebc input{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}\n  #ebc input{flex:1;min-width:160px}\n  #ebc .tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}\n  #ebc table{width:100%;border-collapse:collapse;font-size:13px}\n  #ebc th,#ebc td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}\n  #ebc th{background:#efede6;font-weight:600;white-space:nowrap}\n  #ebc tr:last-child td{border-bottom:0}\n  #ebc .bars div{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}\n  #ebc .bars .lbl{width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n  #ebc .bars .bar{height:14px;background:var(--accent);border-radius:3px}\n  #ebc .empty,#ebc .err{color:var(--muted);font-size:14px;padding:12px}\n  #ebc .err{color:#a33}\n</style>\n\n<h1>Eastside Bible Classes</h1>\n<div class=\"sub\" id=\"ebc-updated\">Loading schedule\u2026</div>\n\n<div class=\"stats\" id=\"ebc-stats\"></div>\n\n<h2 id=\"ebc-now-title\">Now Teaching</h2>\n<div class=\"cards\" id=\"ebc-now\"></div>\n\n<h2 id=\"ebc-next-title\">Up Next</h2>\n<div class=\"cards\" id=\"ebc-next\"></div>\n\n<h2>All Classes</h2>\n<div class=\"filters\">\n  <select id=\"ebc-year\"><option value=\"\">All years</option></select>\n  <select id=\"ebc-kind\"><option value=\"\">All classes</option></select>\n  <select id=\"ebc-type\"><option value=\"\">All types</option></select>\n  <input id=\"ebc-q\" type=\"search\" placeholder=\"Search teacher, book, title\u2026\">\n</div>\n<div class=\"tablewrap\"><table>\n  <thead><tr><th>Year</th><th>Qtr</th><th>Class</th><th>Title</th><th>Book</th><th>Type</th><th>Teacher(s)</th><th>Notes</th></tr></thead>\n  <tbody id=\"ebc-rows\"></tbody>\n</table></div>\n\n<h2>Most Frequent Teachers</h2>\n<div class=\"bars\" id=\"ebc-teachers\"></div>";
+  var base = (document.currentScript && document.currentScript.src || "").replace(/[^\/]*$/, "");
+  if(base && !window.EBCFloorplan){
+    var fp = document.createElement("script"); fp.src = base + "floorplan.js?v=" + Date.now(); document.head.appendChild(fp);
+  }
+  root.innerHTML = "<style>\n  #ebc{--bg:#f7f6f2;--card:#fff;--ink:#1f2a33;--muted:#6b7680;--line:#e3e1da;--accent:#2f5d62;--ot:#8a5a2b;--nt:#2f5d62;--top:#6a4c93;\n    font-family:system-ui,-apple-system,\"Segoe UI\",Roboto,sans-serif;color:var(--ink);background:var(--bg);padding:20px;border-radius:10px;box-sizing:border-box}\n  #ebc *{box-sizing:border-box}\n  #ebc h1{font-size:22px;margin:0 0 2px}\n  #ebc h2{font-size:15px;margin:24px 0 10px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}\n  #ebc .sub{color:var(--muted);font-size:13px}\n  #ebc .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:16px}\n  #ebc .stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px}\n  #ebc .stat b{display:block;font-size:24px}\n  #ebc .stat span{font-size:12px;color:var(--muted)}\n  #ebc .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}\n  #ebc .card{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:14px}\n  #ebc .card .kind{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}\n  #ebc .card .name{font-size:17px;font-weight:600;margin:4px 0 6px}\n  #ebc .card .meta{font-size:13px;line-height:1.5}\n  #ebc .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;color:#fff;background:var(--muted)}\n  #ebc .tag.OT{background:var(--ot)} #ebc .tag.NT{background:var(--nt)} #ebc .tag.Topical{background:var(--top)}\n  #ebc .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}\n  #ebc select,#ebc input{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}\n  #ebc input{flex:1;min-width:160px}\n  #ebc .tablewrap{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:8px}\n  #ebc table{width:100%;border-collapse:collapse;font-size:13px}\n  #ebc th,#ebc td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}\n  #ebc th{background:#efede6;font-weight:600;white-space:nowrap}\n  #ebc tr:last-child td{border-bottom:0}\n  #ebc .bars div{display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0}\n  #ebc .bars .lbl{width:150px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}\n  #ebc .bars .bar{height:14px;background:var(--accent);border-radius:3px}\n  #ebc .empty,#ebc .err{color:var(--muted);font-size:14px;padding:12px}\n  #ebc .err{color:#a33}\n</style>\n\n<h1>Eastside Bible Classes</h1>\n<div class=\"sub\" id=\"ebc-updated\">Loading schedule\u2026</div>\n\n<div class=\"stats\" id=\"ebc-stats\"></div>\n\n<h2 id=\"ebc-now-title\">Now Teaching</h2>\n<div class=\"cards\" id=\"ebc-now\"></div>\n\n<h2>Where Classes Meet</h2>\n<div id=\"ebc-map\"></div>\n\n<h2 id=\"ebc-next-title\">Up Next</h2>\n<div class=\"cards\" id=\"ebc-next\"></div>\n\n<h2>All Classes</h2>\n<div class=\"filters\">\n  <select id=\"ebc-year\"><option value=\"\">All years</option></select>\n  <select id=\"ebc-kind\"><option value=\"\">All classes</option></select>\n  <select id=\"ebc-type\"><option value=\"\">All types</option></select>\n  <input id=\"ebc-q\" type=\"search\" placeholder=\"Search teacher, book, title\u2026\">\n</div>\n<div class=\"tablewrap\"><table>\n  <thead><tr><th>Year</th><th>Qtr</th><th>Class</th><th>Title</th><th>Book</th><th>Type</th><th>Teacher(s)</th><th>Notes</th></tr></thead>\n  <tbody id=\"ebc-rows\"></tbody>\n</table></div>\n\n<h2>Most Frequent Teachers</h2>\n<div class=\"bars\" id=\"ebc-teachers\"></div>";
 
   // ---- CONFIG ----
   // In the sheet: File > Share > Publish to web > pick "Master: Adult" + "Comma-separated values (.csv)" > Publish.
@@ -63,6 +67,8 @@
       };
     }).filter(function(r){ return r.year && (r.name || r.teacher || r.kind); });
     render();
+    window.__ebcRows = rows;
+    try { document.dispatchEvent(new CustomEvent("ebc:data", { detail: rows })); } catch(e) {}
   }
 
   function fail(msg){
@@ -92,10 +98,10 @@
     var next = future.filter(function(r){ return r.start.getTime() === nextStart; });
 
     $("ebc-now-title").textContent = current.length
-      ? "Now Teaching · " + current[0].year + " " + current[0].q + " (" + fmt(current[0].start) + " – " + fmt(current[0].end) + ")"
+      ? "Now Teaching \u00b7 " + current[0].year + " " + current[0].q + " (" + fmt(current[0].start) + " \u2013 " + fmt(current[0].end) + ")"
       : "Now Teaching";
     $("ebc-now").innerHTML = current.length ? current.map(card).join("") : '<div class="empty">No classes found for today\'s date.</div>';
-    $("ebc-next-title").textContent = next.length ? "Up Next · " + next[0].year + " " + next[0].q + " (starts " + fmt(next[0].start) + ")" : "Up Next";
+    $("ebc-next-title").textContent = next.length ? "Up Next \u00b7 " + next[0].year + " " + next[0].q + " (starts " + fmt(next[0].start) + ")" : "Up Next";
     $("ebc-next").innerHTML = next.length ? next.map(card).join("") : '<div class="empty">Next quarter hasn\'t been scheduled yet.</div>';
 
     // Teachers (split on commas / "&" / "and")
@@ -114,7 +120,7 @@
     $("ebc-stats").innerHTML =
       stat(rows.length, "Classes tracked") +
       stat(tlist.length, "Teachers") +
-      stat(years.length ? years[0] + "–" + years[years.length-1] : "–", "Years covered") +
+      stat(years.length ? years[0] + "\u2013" + years[years.length-1] : "\u2013", "Years covered") +
       stat(types.OT || 0, "Old Testament") +
       stat(types.NT || 0, "New Testament") +
       stat(types.Topical || 0, "Topical");
@@ -130,7 +136,7 @@
     fill("ebc-type", uniq(rows.map(function(r){ return r.type; })).sort());
     drawTable();
 
-    $("ebc-updated").textContent = "Live from the Master Tracker · loaded " + new Date().toLocaleString();
+    $("ebc-updated").textContent = "Live from the Master Tracker \u00b7 loaded " + new Date().toLocaleString();
   }
 
   function stat(n, label){ return '<div class="stat"><b>' + esc(n) + '</b><span>' + esc(label) + '</span></div>'; }

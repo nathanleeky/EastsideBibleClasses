@@ -3,6 +3,7 @@
 Live dashboard of Eastside Church of Christ Bible classes, fed from the Master Tracker Google Sheet.
 
 - `dashboard.js` – the whole dashboard (styles, layout, data loading)
+- `floorplan.js` – the "Where Classes Meet" floor plan map. Room shapes and the names that match the sheet's Location column live in the `ROOMS` list at the top.
 - `index.html` – preview page: https://nathanleeky.github.io/EastsideBibleClasses/
 
 ## Embed (WordPress / Elementor HTML widget)
