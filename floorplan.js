@@ -77,17 +77,17 @@
     { id:"apt-bed1", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[659,58,96,92], apt:1 },
     { id:"apt-bed2", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[659,150,96,144], apt:1 },
 
-    // Existing annex (north building). Rename these once we know what each room is called.
-    { id:"annex1", name:"Annex A", aka:["annex a"], use:"class", r:[950,69,82,150] },
-    { id:"annex1b", name:"", use:"service", r:[950,221,82,39] },
-    { id:"annex2", name:"Annex B", aka:["annex b"], use:"class", r:[1034,69,132,75] },
-    { id:"annex3", name:"Annex C", aka:["annex c"], use:"class", r:[1059,146,107,84] },
-    { id:"annex-rr", name:"", use:"service", r:[1059,232,107,28] },
-    { id:"annex4", name:"Annex D", aka:["annex d"], use:"class", r:[1168,69,75,75] },
-    { id:"annex5", name:"Annex E", aka:["annex e"], use:"class", r:[1168,146,75,114] },
-    { id:"annex6", name:"Annex F", aka:["annex f"], use:"class", r:[1270,69,64,75] },
-    { id:"annex7", name:"Annex G", aka:["annex g"], use:"class", r:[1270,146,64,54] },
-    { id:"annex8", name:"Annex H", aka:["annex h"], use:"class", r:[1270,203,64,57] }
+    // Existing annex (north building) - the kids' room numbers used on Master: Kids
+    { id:"annex1", name:"Room 8", aka:["room 8","annex a"], use:"class", r:[950,69,82,150] },
+    { id:"annex1b", name:"Storage Closet", use:"service", r:[950,221,82,39] },
+    { id:"annex2", name:"Room 6", aka:["room 6","annex b"], use:"class", r:[1034,69,132,75] },
+    { id:"annex3", name:"Room 7", aka:["room 7","annex c"], use:"class", r:[1059,146,107,84] },
+    { id:"annex-rr", name:"Restrooms", use:"service", r:[1059,232,107,28] },
+    { id:"annex4", name:"Room 4", aka:["room 4","annex d"], use:"class", r:[1168,69,75,75] },
+    { id:"annex5", name:"Room 5", aka:["room 5","annex e"], use:"class", r:[1168,146,75,114] },
+    { id:"annex6", name:"Room 3", aka:["room 3","annex f"], use:"class", r:[1270,69,64,75] },
+    { id:"annex7", name:"Copier Room", aka:["copier room","copier","annex g"], use:"service", r:[1270,146,64,54] },
+    { id:"annex8", name:"Room 1", aka:["room 1","annex h"], use:"class", r:[1270,203,64,57] }
   ];
 
   // Building outlines (drawn under the rooms as the "slab")
@@ -433,8 +433,8 @@
       if(!r.name || byRoom[r.id]) return;
       var big = r.use !== "service";
       var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
-      var fs = Math.max(9, Math.min(big ? 14 : 11, (wid - 8) / (r.name.length * 0.66)));
-      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif" letter-spacing=".5">'+esc(r.name.toUpperCase())+'</text>');
+      var fs = Math.max(big ? 9 : 6.5, Math.min(big ? 14 : 11, (wid - 6) / (r.name.length * (big ? 0.66 : 0.72))));
+      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif"'+(big ? ' letter-spacing=".5"' : '')+'>'+esc(r.name.toUpperCase())+'</text>');
     });
 
     // pins
