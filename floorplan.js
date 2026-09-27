@@ -457,13 +457,9 @@
       var FIT_TXT = { ok:"#5fd692", tight:"#e8b23d", over:"#e8756b" };
       list.forEach(function(c, i){
         var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
-        // Age group leads (it's what matters most at a glance here); the topic tags along
-        // only if it fits, and never gets cut into - it just drops if there isn't room.
-        var ageGroup = (c.isKid ? (c.age || c.kind) : c.kind) || "";
-        var topic = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : "";
-        var title = ageGroup || topic || "Class";
+        // Just the age group on the pin - that's what matters at a glance here.
+        var title = (c.isKid ? (c.age || c.kind) : c.kind) || "Class";
         if(title.length > 24) title = title.slice(0, 22) + "\u2026";
-        else if(topic && (title + " \u00b7 " + topic).length <= 24) title += " \u00b7 " + topic;
         var draft = c.status === "Idea" || c.status === "Planned";
         var sub = c.headcount != null ? (c.headcount + (c.cap != null ? " / " + c.cap : "")) + (draft ? " \u00b7 " + c.status : "") : (draft ? c.status : "");
         var lfs = Math.max(13, Math.min(16, (wid + 36) / (title.length * 0.58)));
