@@ -2,7 +2,7 @@
  * Eastside Bible Classes dashboard
  * Embed on any page with:
  *   <div id="ebc"></div>
- *   <script src="https://nathanleeky.github.io/eastsidebibleclasses/dashboard.js"></script>
+ *   <script src="https://nathanleeky.github.io/EastsideBibleClasses/dashboard.js"></script>
  * Data: "Master Tracker (Classes & Teachers)" > "Master: Adult" tab, published to the web as CSV.
  */
 (function(){
