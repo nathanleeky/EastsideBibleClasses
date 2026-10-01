@@ -293,34 +293,35 @@
   }
 
   var CSS = [
-    "#ebc .fp-wrap{background:#141b24;border-radius:10px;padding:14px;color:#dfe6ee}",
-    "#ebc .fp-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}",
-    "#ebc .fp-top select{background:#1f2833;color:#dfe6ee;border:1px solid #33404f}",
-    "#ebc .fp-legend{font-size:12px;color:#9aa8b8;display:flex;gap:14px;align-items:center}",
+    "#ebc .fp-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;color:#111827}",
+    "#ebc .fp-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}",
+    "#ebc .fp-legend{font-size:12px;color:#6b7280;display:flex;flex-wrap:wrap;gap:14px;align-items:center}",
     "#ebc .fp-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}",
-    "#ebc .fp-body{display:grid;grid-template-columns:minmax(0,640px) minmax(240px,1fr);gap:14px;align-items:start}",
-    "#ebc .fp-scroll{overflow-x:auto;border-radius:8px;background:#0e141b}",
+    "#ebc .fp-body{display:grid;grid-template-columns:minmax(0,640px) minmax(240px,1fr);gap:16px;align-items:start}",
+    "#ebc .fp-scroll{overflow-x:auto;border-radius:10px;background:#f9fafb;border:1px solid #f3f4f6}",
     "#ebc .fp-scroll svg{display:block;width:100%;height:auto}",
-    "#ebc .fp-list{display:flex;flex-direction:column;gap:6px;max-height:690px;overflow-y:auto}",
-    "#ebc .fp-item{background:#1b232d;border:1px solid #2a3542;border-radius:8px;padding:9px 11px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}",
-    "#ebc .fp-item:hover,#ebc .fp-item.on{border-color:#e8a33d;background:#222c38}",
-    "#ebc .fp-item .rm{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#9fd3d6}",
-    "#ebc .fp-item .ti{font-size:14px;font-weight:600;color:#f1f5f9;margin:2px 0}",
-    "#ebc .fp-item .me{font-size:12px;color:#9aa8b8}",
-    "#ebc .fp-item.off{cursor:default;opacity:.75}",
-    "#ebc .fp-item.off .rm{color:#e8a33d}",
-    "#ebc .fp-empty{font-size:13px;color:#9aa8b8;padding:8px}",
+    "#ebc .fp-scroll svg text{font-family:Inter,system-ui,sans-serif}",
+    "#ebc .fp-list{display:flex;flex-direction:column;gap:8px;max-height:690px;overflow-y:auto}",
+    "#ebc .fp-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}",
+    "#ebc .fp-item:hover,#ebc .fp-item.on{border-color:#0b8ed8;background:#f0f9ff}",
+    "#ebc .fp-item .rm{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#0b8ed8}",
+    "#ebc .fp-item .ti{font-size:14px;font-weight:600;color:#111827;margin:2px 0}",
+    "#ebc .fp-item .me{font-size:12px;color:#6b7280}",
+    "#ebc .fp-item.off{cursor:default;opacity:.8}",
+    "#ebc .fp-item.off .rm{color:#b45309}",
+    "#ebc .fp-empty{font-size:13px;color:#6b7280;padding:8px}",
     "@media (max-width:820px){#ebc .fp-body{grid-template-columns:1fr}#ebc .fp-scroll svg{min-width:600px;max-height:none}#ebc .fp-list{max-height:none}}",
     "#ebc .fp-room{transition:fill .2s}",
     "#ebc .fp-pin{cursor:pointer}",
-    "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#e8a33d;stroke:#fff}",
-    "#ebc .fp-hint{margin-top:8px;font-size:12px;color:#7f8fa3}",
-    "#ebc .fp-warn{margin:0 0 10px;font-size:12.5px;color:#e8b23d;background:#2a2213;border:1px solid #4a3a1a;border-radius:6px;padding:7px 10px}",
-    "#ebc .fp-chip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:1px 6px;border-radius:99px;margin-left:6px;vertical-align:1px}",
-    "#ebc .fp-chip.ok{background:#1e3a2c;color:#5fd692}",
-    "#ebc .fp-chip.tight{background:#3a3016;color:#e8b23d}",
-    "#ebc .fp-chip.over{background:#3a1e1e;color:#e8756b}",
-    "#ebc .fp-chip.status{background:#2a3542;color:#9fd3d6;text-transform:uppercase}",
+    "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#0b8ed8;stroke:#0b8ed8}",
+    "#ebc .fp-pin:hover path, #ebc .fp-pin.on path{stroke:#fff}",
+    "#ebc .fp-hint{margin-top:10px;font-size:12px;color:#9ca3af}",
+    "#ebc .fp-warn{margin:0 0 12px;font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px}",
+    "#ebc .fp-chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:1px}",
+    "#ebc .fp-chip.ok{background:#d1fae5;color:#047857}",
+    "#ebc .fp-chip.tight{background:#fef3c7;color:#b45309}",
+    "#ebc .fp-chip.over{background:#fee2e2;color:#b91c1c}",
+    "#ebc .fp-chip.status{background:#f3f4f6;color:#4b5563;text-transform:uppercase}",
     "#ebc .fp-item .badges{margin-top:4px}"
   ].join("\n");
 
@@ -349,7 +350,7 @@
       '<div class="fp-wrap">' +
         '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
             return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#2f6f73"></i>Class meets here</span><span><i style="background:#3a4a5e"></i>Classroom</span><span><i style="background:#1e252e;border:1px solid #3a4757;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #e8a33d;box-sizing:border-box"></i>2nd floor</span><span><i style="background:#5c4a22"></i>Tight fit</span><span><i style="background:#5c2b28"></i>Over capacity</span></div></div>' +
+          '</select><div class="fp-legend"><span><i style="background:#e0f2fe"></i>Class meets here</span><span><i style="background:#f1f5f9"></i>Classroom</span><span><i style="background:#fafafa;border:1px solid #cbd5e1;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #f59e0b;box-sizing:border-box"></i>2nd floor</span><span><i style="background:#fef3c7"></i>Tight fit</span><span><i style="background:#fee2e2"></i>Over capacity</span></div></div>' +
         '<div id="ebc-fp-warn"></div>' +
         '<div class="fp-body"><div class="fp-scroll"></div><div class="fp-list" id="ebc-fp-list"></div></div>' +
         '<div class="fp-hint">Hover or tap a pin or a class to match them up.</div>' +
@@ -395,31 +396,31 @@
 
     // canopies
     CANOPIES.forEach(function(c){
-      h.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+c[2]+'" height="'+c[3]+'" fill="none" stroke="#3a4757" stroke-width="2" stroke-dasharray="8 6" rx="4"/>');
+      h.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+c[2]+'" height="'+c[3]+'" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 6" rx="4"/>');
     });
     // slab shadow (fake wall height) then slab
-    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s.map(function(q){ return [q[0]+7, q[1]+10]; }))+'" fill="#070a0e"/>'); });
-    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s)+'" fill="#1b232d" stroke="#8796a8" stroke-width="5" stroke-linejoin="round"/>'); });
+    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s.map(function(q){ return [q[0]+7, q[1]+10]; }))+'" fill="#e5e7eb"/>'); });
+    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s)+'" fill="#ffffff" stroke="#cbd5e1" stroke-width="5" stroke-linejoin="round"/>'); });
 
     // rooms (tinted amber/red instead of teal when this quarter's headcount is tight/over capacity)
-    var FIT_GLOW = { ok:"#3fa1a6", tight:"#e8b23d", over:"#e8756b" }, FIT_FILL = { ok:"#2f6f73", tight:"#5c4a22", over:"#5c2b28" };
+    var FIT_GLOW = { ok:"#0b8ed8", tight:"#d97706", over:"#dc2626" }, FIT_FILL = { ok:"#e0f2fe", tight:"#fef3c7", over:"#fee2e2" };
     ROOMS.forEach(function(r){
       var used = !!byRoom[r.id];
       var worst = used ? (byRoom[r.id].some(function(c){ return c.fit === "over"; }) ? "over" : byRoom[r.id].some(function(c){ return c.fit === "tight"; }) ? "tight" : "ok") : null;
-      var fill = used ? FIT_FILL[worst] : (r.use === "class" ? "#3a4a5e" : "#1e252e");
+      var fill = used ? FIT_FILL[worst] : (r.use === "class" ? "#f1f5f9" : "#fafafa");
       if(used) h.push('<polygon points="'+pts(r.p)+'" fill="'+FIT_GLOW[worst]+'" opacity=".35" filter="url(#fpglow)"/>');
-      h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#8796a8" stroke-width="2.5" stroke-linejoin="round"/>');
+      h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#cbd5e1" stroke-width="2.5" stroke-linejoin="round"/>');
     });
     // caption for the detached apartment
-    h.push('<text x="590" y="316" text-anchor="middle" font-size="15" fill="#7f8fa3" font-family="system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
+    h.push('<text x="590" y="316" text-anchor="middle" font-size="15" fill="#94a3b8" font-family="Inter,system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
 
     // mark the upper-floor block
-    h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#e8a33d" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
-    h.push('<rect x="1163" y="358" width="160" height="30" rx="15" fill="#e8a33d"/><text x="1243" y="379" text-anchor="middle" font-size="16" font-weight="700" fill="#141b24" font-family="system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
+    h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
+    h.push('<rect x="1163" y="358" width="160" height="30" rx="15" fill="#f59e0b"/><text x="1243" y="379" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff" font-family="Inter,system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
 
     // faint pew rows in the auditorium, for a sense of place
     var aud = ROOMS.filter(function(r){ return r.id === "auditorium"; })[0];
-    h.push('<clipPath id="fpaud"><polygon points="'+pts(aud.p)+'"/></clipPath><g clip-path="url(#fpaud)" stroke="#ffffff" stroke-opacity=".07" stroke-width="3">');
+    h.push('<clipPath id="fpaud"><polygon points="'+pts(aud.p)+'"/></clipPath><g clip-path="url(#fpaud)" stroke="#0f172a" stroke-opacity=".06" stroke-width="3">');
     for(var py = 880; py <= 1150; py += 16){
       var bow = (py - 880) * 0.18;
       h.push('<path d="M975 '+(py - bow)+' Q1243 '+(py + 40 - bow)+' 1512 '+(py - bow)+'" fill="none"/>');
@@ -432,7 +433,7 @@
       var big = r.use !== "service";
       var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
       var fs = Math.max(big ? 9 : 6.5, Math.min(big ? 14 : 11, (wid - 6) / (r.name.length * (big ? 0.66 : 0.72))));
-      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#c3d0de" : big ? "#7f8fa3" : "#566476")+'" font-family="system-ui,sans-serif"'+(big ? ' letter-spacing=".5"' : '')+'>'+esc(r.name.toUpperCase())+'</text>');
+      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#475569" : big ? "#94a3b8" : "#9ca3af")+'" font-family="Inter,system-ui,sans-serif"'+(big ? ' letter-spacing=".5"' : '')+'>'+esc(r.name.toUpperCase())+'</text>');
     });
 
     // pins
@@ -451,8 +452,8 @@
       var y0 = mid - (n - 1) * gap / 2 - 11;            // circle sits above its label, so nudge up
       var titleY = Math.max(top + 19, y0 - (hasSub ? 40 : 36)); // tag sits just above the pins, never outside the room
       var tfs = Math.max(10, Math.min(14, (wid - 8) / (room.name.length * 0.7)));
-      h.push('<text x="'+room.at[0]+'" y="'+titleY+'" text-anchor="middle" font-size="'+tfs.toFixed(1)+'" fill="#9fd3d6" font-family="system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
-      var FIT_TXT = { ok:"#5fd692", tight:"#e8b23d", over:"#e8756b" };
+      h.push('<text x="'+room.at[0]+'" y="'+titleY+'" text-anchor="middle" font-size="'+tfs.toFixed(1)+'" fill="#0b8ed8" font-family="Inter,system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
+      var FIT_TXT = { ok:"#047857", tight:"#d97706", over:"#dc2626" };
       list.forEach(function(c, i){
         var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
         // Just the age group on the pin - that's what matters at a glance here.
@@ -462,11 +463,11 @@
         var sub = c.headcount != null ? (c.headcount + (c.cap != null ? " / " + c.cap : "")) + (draft ? " \u00b7 " + c.status : "") : (draft ? c.status : "");
         var lfs = Math.max(13, Math.min(16, (wid + 36) / (title.length * 0.58)));
         h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
-          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#10161d" stroke="#9fd3d6" stroke-width="2.2"' + (draft ? ' stroke-dasharray="4 3"' : '') + '/>' +
+          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#ffffff" stroke="#0b8ed8" stroke-width="2.2"' + (draft ? ' stroke-dasharray="4 3"' : '') + '/>' +
           // little open-book icon
-          '<path d="M'+(x-7)+' '+(y-4)+' q3.5 -2.6 7 0 q3.5 -2.6 7 0 v9 q-3.5 -2.6 -7 0 q-3.5 -2.6 -7 0 z M'+x+' '+(y-4)+' v9" fill="none" stroke="#e6edf3" stroke-width="1.5" stroke-linejoin="round"/>' +
-          '<text x="'+x+'" y="'+(y + 17 + lfs)+'" text-anchor="middle" font-size="'+lfs.toFixed(1)+'" font-weight="600" fill="#f1f5f9" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(title)+'</text>' +
-          (sub ? '<text x="'+x+'" y="'+(y + 28 + lfs)+'" text-anchor="middle" font-size="10.5" font-weight="600" fill="'+(c.fit ? FIT_TXT[c.fit] : "#9aa8b8")+'" font-family="system-ui,sans-serif" paint-order="stroke" stroke="#0e141b" stroke-width="4">'+esc(sub)+'</text>' : '') +
+          '<path d="M'+(x-7)+' '+(y-4)+' q3.5 -2.6 7 0 q3.5 -2.6 7 0 v9 q-3.5 -2.6 -7 0 q-3.5 -2.6 -7 0 z M'+x+' '+(y-4)+' v9" fill="none" stroke="#0b8ed8" stroke-width="1.5" stroke-linejoin="round"/>' +
+          '<text x="'+x+'" y="'+(y + 17 + lfs)+'" text-anchor="middle" font-size="'+lfs.toFixed(1)+'" font-weight="600" fill="#111827" font-family="Inter,system-ui,sans-serif" paint-order="stroke" stroke="#ffffff" stroke-width="4">'+esc(title)+'</text>' +
+          (sub ? '<text x="'+x+'" y="'+(y + 28 + lfs)+'" text-anchor="middle" font-size="10.5" font-weight="600" fill="'+(c.fit ? FIT_TXT[c.fit] : "#6b7280")+'" font-family="Inter,system-ui,sans-serif" paint-order="stroke" stroke="#ffffff" stroke-width="4">'+esc(sub)+'</text>' : '') +
         '</g>');
       });
     });
