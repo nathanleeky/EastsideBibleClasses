@@ -21,7 +21,7 @@
   // Paste the link it gives you here:
   var CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdJiH5iDHu2UgeZkPtzBWYq7NWn57DsXteYL6NFNkfCmEWmDIxqUAcCwokBObwozxOaUh-dCEf9Gcx/pub?gid=221404712&single=true&output=csv";
 
-  var rows = [];
+  var rows = [], kidRows = [];
   var $ = function(id){ return document.getElementById(id); };
   var esc = function(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); };
 
@@ -73,6 +73,21 @@
     try { document.dispatchEvent(new CustomEvent("ebc:data", { detail: rows })); } catch(e) {}
   }
 
+  // Kids classes (Master: Kids tab) are loaded independently by floorplan.js, which
+  // may finish before or after this script. Pick them up whichever way, and merge
+  // them into every dashboard view alongside the Adult rows.
+  function normKid(r){
+    return { year:r.year, q:r.q, start:r.start, end:r.end, kind:r.kind, teacher:r.teacher,
+              name:r.name, book:r.book, type:r.type, loc:r.loc, notes:r.notes,
+              status:r.status, est:r.est || "", isKid:true };
+  }
+  function takeKids(list){
+    kidRows = (list || []).map(normKid);
+    if(rows.length) render();
+  }
+  if(window.EBCFloorplan && window.EBCFloorplan.kids().length) takeKids(window.EBCFloorplan.kids());
+  document.addEventListener("ebc:kids", function(e){ takeKids(e.detail); });
+
   function fail(msg){
     $("ebc-updated").innerHTML = '<span class="err">' + esc(msg) + '</span>';
   }
@@ -80,7 +95,8 @@
   var TYPE_LABEL = { OT:"Old Testament", NT:"New Testament", Topical:"Topical" };
   function card(r){
     var t = r.type && r.type !== "TBD" ? r.type : "";
-    return '<div class="card"><div class="ban ' + esc(t) + '"><small>' + esc(TYPE_LABEL[t] || "Bible Class") + '</small><strong>' + esc(r.book || r.name || "TBD") + '</strong></div>' +
+    var banLabel = TYPE_LABEL[t] || (r.isKid ? "Kids Class" : "Bible Class");
+    return '<div class="card"><div class="ban ' + esc(t) + '"><small>' + esc(banLabel) + '</small><strong>' + esc(r.book || r.name || "TBD") + '</strong></div>' +
       '<div class="bd"><div class="top"><span class="kind">' + esc(r.kind) + '</span>' + (t ? '<span class="tag ' + esc(t) + '">' + esc(t) + '</span>' : '') + '</div>' +
       '<div class="name">' + esc(r.name || "Title TBD") + '</div><div class="meta">' +
       (r.teacher ? '<div>' + esc(r.teacher) + '</div>' : '') +
@@ -92,11 +108,12 @@
 
   function render(){
     var today = new Date(); today.setHours(0,0,0,0);
+    var all = rows.concat(kidRows);
 
     // Current + next quarter (drafts still being planned - Status "Idea"/"Planned" - don't show here yet)
     var settled = function(r){ return r.status !== "Idea" && r.status !== "Planned"; };
-    var current = rows.filter(function(r){ return settled(r) && r.start && r.end && r.start <= today && today <= r.end; });
-    var future = rows.filter(function(r){ return settled(r) && r.start && r.start > today; })
+    var current = all.filter(function(r){ return settled(r) && r.start && r.end && r.start <= today && today <= r.end; });
+    var future = all.filter(function(r){ return settled(r) && r.start && r.start > today; })
                      .sort(function(a,b){ return a.start - b.start; });
     var nextStart = future.length ? future[0].start.getTime() : null;
     var next = future.filter(function(r){ return r.start.getTime() === nextStart; });
@@ -110,7 +127,7 @@
 
     // Teachers (split on commas / "&" / "and")
     var tcount = {};
-    rows.forEach(function(r){
+    all.forEach(function(r){
       if(r.start && r.start > today) return;
       String(r.teacher).split(/,|&|\band\b/).forEach(function(t){
         t = t.trim(); if(t && !/^tbd$/i.test(t)) tcount[t] = (tcount[t] || 0) + 1;
@@ -119,10 +136,10 @@
     var tlist = Object.keys(tcount).map(function(k){ return [k, tcount[k]]; }).sort(function(a,b){ return b[1]-a[1] || a[0].localeCompare(b[0]); });
 
     // Stats
-    var types = {}; rows.forEach(function(r){ if(r.type && r.type !== "TBD") types[r.type] = (types[r.type]||0)+1; });
-    var years = uniq(rows.map(function(r){ return r.year; })).sort();
+    var types = {}; all.forEach(function(r){ if(r.type && r.type !== "TBD") types[r.type] = (types[r.type]||0)+1; });
+    var years = uniq(all.map(function(r){ return r.year; })).sort(function(a,b){ return (+a) - (+b); });
     $("ebc-stats").innerHTML =
-      stat(rows.length, "Classes tracked", "book-open") +
+      stat(all.length, "Classes tracked", "book-open") +
       stat(tlist.length, "Teachers", "users") +
       stat(years.length ? years[0] + "\u2013" + years[years.length-1] : "\u2013", "Years covered", "calendar") +
       stat(types.OT || 0, "Old Testament", "scroll-text") +
@@ -136,8 +153,8 @@
 
     // Filters
     fill("ebc-year", years.slice().reverse());
-    fill("ebc-kind", uniq(rows.map(function(r){ return r.kind; })).sort());
-    fill("ebc-type", uniq(rows.map(function(r){ return r.type; })).sort());
+    fill("ebc-kind", uniq(all.map(function(r){ return r.kind; })).sort());
+    fill("ebc-type", uniq(all.map(function(r){ return r.type; })).sort());
     drawTable();
 
     $("ebc-updated").textContent = "Live from the Master Tracker \u00b7 loaded " + new Date().toLocaleString();
@@ -152,7 +169,7 @@
 
   function drawTable(){
     var y = $("ebc-year").value, k = $("ebc-kind").value, t = $("ebc-type").value, q = $("ebc-q").value.toLowerCase();
-    var list = rows.filter(function(r){
+    var list = rows.concat(kidRows).filter(function(r){
       if(y && r.year !== y) return false;
       if(k && r.kind !== k) return false;
       if(t && r.type !== t) return false;

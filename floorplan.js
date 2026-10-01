@@ -259,6 +259,7 @@
       };
     }).filter(function(r){ return r.year; });
     PLAN.loaded++; if(window.EBCFloorplan) window.EBCFloorplan.refresh();
+    try { document.dispatchEvent(new CustomEvent("ebc:kids", { detail: PLAN.kids })); } catch(e) {}
   });
   loadCSV(DEMO_CSV_URL, function(text){
     var t = csvObjects(text); if(!t.cols.length) return;
@@ -508,6 +509,7 @@
 
   window.EBCFloorplan = {
     render: render, rooms: ROOMS, findRoom: findRoom,
+    kids: function(){ return PLAN.kids; },
     refresh: function(){ if(lastRows) render(lastRows); }
   };
   if(window.__ebcRows) render(window.__ebcRows);
