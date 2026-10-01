@@ -311,6 +311,7 @@
     "#ebc .fp-item.off .rm{color:#b45309}",
     "#ebc .fp-empty{font-size:13px;color:#6b7280;padding:8px}",
     "@media (max-width:820px){#ebc .fp-body{grid-template-columns:1fr}#ebc .fp-scroll svg{min-width:600px;max-height:none}#ebc .fp-list{max-height:none}}",
+    "@media (max-width:640px){#ebc .fp-wrap{padding:12px;border-radius:14px}#ebc .fp-top{gap:8px}#ebc .fp-legend{font-size:11px;gap:10px}#ebc .fp-item{padding:10px 12px;border-radius:12px}#ebc .fp-warn{font-size:12px;padding:8px 10px;border-radius:10px}}",
     "#ebc .fp-room{transition:fill .2s}",
     "#ebc .fp-pin{cursor:pointer}",
     "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#0b8ed8;stroke:#0b8ed8}",
