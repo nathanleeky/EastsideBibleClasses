@@ -17,7 +17,7 @@
 
   var TIGHT = 0.9;           // at or above this share of capacity = "tight"
   var rows = [];             // every class, adult + kids, all quarters
-  var state = { q:"", view:"classes", filter:"all", floor:"main", pick:null, sheet:null, smallOpen:false, nocapOpen:false, toast:null };
+  var state = { q:"", view:"classes", filter:"all", floor:"main", pick:null, sheet:null, smallOpen:false, nocapOpen:false, toast:null, extraQ:{} };
   var loadError = "", lastSheetKey = null, toastTimer = null, saveChain = Promise.resolve();
 
   var $ = function(id){ return document.getElementById(id); };
@@ -100,23 +100,28 @@
       .then(function(t){ if(/^\s*</.test(t)) throw new Error("got a web page instead of CSV"); return EBC.parseCSV(t); });
   }
   // data[i] is sheet row i + 1 (row 1 = headers)
+  function rowFrom(src, sheetRow, v){
+    var kid = src === "kids";
+    return { id:src + ":" + sheetRow, src:src, sheetRow:sheetRow, isKid:kid,
+      year:v.year, q:v.q, startRaw:v.start || "", endRaw:v.end || "", start:toDate(v.start || ""), end:toDate(v.end || ""),
+      kind: kid ? "Kids: " + (v.age || "") : (v.kind || ""), age: kid ? (v.age || "") : "",
+      teacher:v.teacher || "", name:v.name || "", book:v.book || "", type:v.type || "", notes:v.notes || "", loc:v.loc || "",
+      statusRaw:v.status || "", status:v.status || "Confirmed", est:v.est || "" };
+  }
   function toRows(data, src){
     if(!data.length) return [];
     var cols = data[0].map(function(c){ return c.trim(); });
     var ix = function(n){ return cols.indexOf(n); };
     var K = src === "adult"
-      ? { year:ix("Year"), q:ix("Q"), start:ix("Start"), end:ix("End"), kind:ix("Kind"), teacher:ix("Teacher"), name:ix("Class Name") > -1 ? ix("Class Name") : ix("Name"), loc:ix("Location"), status:ix("Status"), est:ix("Est. Headcount") }
-      : { year:ix("Year"), q:ix("Q"), start:ix("Start"), end:ix("End"), age:ix("Age"), teacher:ix("Teachers"), name:ix("Class Name"), loc:ix("Room #"), status:ix("Status") };
-    var g = function(c, k){ return K[k] > -1 ? (c[K[k]] || "").trim() : ""; };
+      ? { year:ix("Year"), q:ix("Q"), start:ix("Start"), end:ix("End"), kind:ix("Kind"), teacher:ix("Teacher"), name:ix("Class Name") > -1 ? ix("Class Name") : ix("Name"), book:ix("Book"), type:ix("Type"), loc:ix("Location"), notes:ix("Notes"), status:ix("Status"), est:ix("Est. Headcount") }
+      : { year:ix("Year"), q:ix("Q"), start:ix("Start"), end:ix("End"), age:ix("Age"), teacher:ix("Teachers"), name:ix("Class Name"), loc:ix("Room #"), notes:ix("Notes"), status:ix("Status") };
     var out = [];
     data.slice(1).forEach(function(c, i){
-      var year = g(c, "year"); if(!year) return;
-      var r = { id:src + ":" + (i + 2), src:src, sheetRow:i + 2, isKid:src === "kids",
-        year:year, q:g(c, "q"), start:toDate(g(c, "start")), end:toDate(g(c, "end")),
-        kind: src === "adult" ? g(c, "kind") : "Kids: " + g(c, "age"), age: src === "kids" ? g(c, "age") : "",
-        teacher:g(c, "teacher"), name:g(c, "name"), loc:g(c, "loc"), status:g(c, "status") || "Confirmed", est:g(c, "est") };
-      if(src === "adult" && !r.kind && !r.name) return;
-      out.push(r);
+      var v = {};
+      Object.keys(K).forEach(function(k){ v[k] = K[k] > -1 ? (c[K[k]] || "").trim() : ""; });
+      if(!v.year) return;
+      if(src === "adult" && !v.kind && !v.name) return;
+      out.push(rowFrom(src, i + 2, v));
     });
     return out;
   }
@@ -145,6 +150,7 @@
   function quarters(){
     var q = {}, today = new Date(); today.setHours(0,0,0,0);
     var now = null;
+    Object.keys(state.extraQ).forEach(function(k){ q[k] = state.extraQ[k].start; });
     rows.forEach(function(c){
       if(!c.q) return;
       var k = qKey(c);
@@ -163,13 +169,14 @@
 
   // ---------------------------------------------------------------------------
   // Saving
-  function post(c, loc){
-    var body = { action:"set", tab:c.src, row:c.sheetRow, loc:loc,
-                 expect: c.src === "adult" ? { Year:c.year, Q:c.q, Kind:c.kind } : { Year:c.year, Q:c.q, Age:c.age } };
+  function send(body){
+    if(!SCRIPT_URL) return Promise.reject(new Error("saving isn't set up yet"));
     return fetch(SCRIPT_URL, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body:JSON.stringify(body) })
       .then(function(r){ return r.json(); })
-      .then(function(d){ if(!d || !d.ok) throw new Error(d && d.error || "save failed"); });
+      .then(function(d){ if(!d || !d.ok) throw new Error(d && d.error || "save failed"); return d; });
   }
+  function expectOf(c){ return c.src === "adult" ? { year:c.year, q:c.q, kind:c.kind } : { year:c.year, q:c.q, age:c.age }; }
+  function post(c, loc){ return send({ action:"set", tab:c.src, row:c.sheetRow, loc:loc, expect:expectOf(c) }); }
   // changes: [{ c, loc }]. UI updates right away; if the save fails the old value comes back.
   function apply(changes, msg){
     var prev = changes.map(function(ch){ return { c:ch.c, loc:ch.c.loc }; });
@@ -233,12 +240,13 @@
   }
   function classesHTML(){
     var list = qClasses(), need = list.filter(function(c){ return !roomOf(c); }), placed = list.filter(function(c){ return roomOf(c); });
-    if(!list.length) return '<p class="empty">No classes found for this quarter.</p>';
+    var addBtn = '<div class="add-row"><button class="btn secondary" data-do="addclass">+ Add a class to ' + esc(state.q) + '</button></div>';
+    if(!list.length) return '<div class="summary"><p class="empty">No classes in ' + esc(state.q) + ' yet.</p></div>' + addBtn;
     var pct = Math.round(placed.length / list.length * 100);
     var head = need.length ? '<strong>' + need.length + '</strong> of ' + list.length + ' classes need a room' : 'All <strong>' + list.length + '</strong> classes have a room';
     var html = '<section class="summary" aria-label="Progress"><div class="line">' + head + '</div><div class="bar"><span style="width:' + pct + '%"></span></div></section>';
     function chip(k, label, n){ return '<button class="chip" data-do="filter" data-f="' + k + '" aria-pressed="' + (state.filter === k) + '">' + label + ' <i>' + n + '</i></button>'; }
-    html += '<div class="chips" role="group" aria-label="Filter">' + chip("all", "All", list.length) + chip("need", "Needs a room", need.length) + chip("placed", "Placed", placed.length) + '</div>';
+    html += '<div class="chips" role="group" aria-label="Filter">' + chip("all", "All", list.length) + chip("need", "Needs a room", need.length) + chip("placed", "Placed", placed.length) + '</div>' + addBtn;
     if(state.filter !== "placed"){
       html += '<div class="sec-h"><h2>Needs a room</h2><span>' + need.length + '</span></div>';
       html += need.length ? '<div class="group">' + need.map(classRow).join("") + '</div>' : '<div class="group"><p class="empty">Every class has a room.</p></div>';
@@ -373,7 +381,8 @@
       body += '<div class="current-card"><div class="row"><div><div class="eyebrow">Now in</div><strong>' + esc(roomName(cr)) + '</strong></div>' + badgeFor(c, cr) + '</div>' +
         '<button class="btn quiet" data-do="unassign" data-c="' + esc(c.id) + '">Remove from room</button></div>';
     }
-    body += '<button class="btn secondary" data-do="pickmap" data-c="' + esc(c.id) + '">' + ICON_MAP + ' Choose on the map</button>';
+    body += '<button class="btn secondary" data-do="pickmap" data-c="' + esc(c.id) + '">' + ICON_MAP + ' Choose on the map</button>' +
+      '<button class="btn secondary" data-do="editclass" data-c="' + esc(c.id) + '">Edit details</button>';
     body += '<div class="block"><h3>' + (cr ? "Move to another room" : "Open rooms that fit") + '</h3>';
     body += open.length ? '<div class="group">' + open.map(function(x){ return optRow(c, x.r, "open", x.r.id === bestId); }).join("") + '</div>'
       : '<div class="group"><p class="empty">No open room holds ' + size + ' people. Lower the count or free up a room.</p></div>';
@@ -412,10 +421,146 @@
   }
 
   // ---------------------------------------------------------------------------
+  // Forms: add a quarter, add a class, edit a class
+  function field(label, input, cls){ return '<label class="field' + (cls ? " " + cls : "") + '"><span>' + label + '</span>' + input + '</label>'; }
+  function options(list, cur){
+    if(cur && list.indexOf(cur) < 0) list = list.concat([cur]);
+    return list.map(function(o){ return '<option value="' + esc(o) + '"' + (o === cur ? " selected" : "") + '>' + esc(o || "(blank)") + '</option>'; }).join("");
+  }
+  function formSheet(title, eyebrow, formId, body, label){
+    return '<div class="sheet-head"><div class="grab"></div><div class="head-row"><div><div class="eyebrow">' + esc(eyebrow) + '</div><h2 id="sheet-title">' + esc(title) + '</h2></div>' +
+      '<button class="x" data-do="close" aria-label="Close">' + ICON_X + '</button></div></div>' +
+      '<form class="sheet-body" data-form="' + esc(formId) + '" novalidate>' + body +
+      '<p class="form-err" id="form-err" role="alert" hidden></p>' +
+      '<button class="btn primary" type="submit" data-label="' + esc(label) + '">' + esc(label) + '</button></form>';
+  }
+  function formError(f, msg){ var el = f.querySelector("#form-err"); el.textContent = msg; el.hidden = !msg; }
+  function setBusy(f, b){ var btn = f.querySelector("button[type=submit]"); btn.disabled = b; btn.textContent = b ? "Saving\u2026" : btn.getAttribute("data-label"); }
+  function val(f, id){ var el = f.querySelector("#" + id); return el ? el.value.trim() : ""; }
+  function fmtDate(d){ return (d.getMonth() + 1) + "/" + d.getDate() + "/" + d.getFullYear(); }
+  function isoDate(d){ var m = d.getMonth() + 1, x = d.getDate(); return d.getFullYear() + "-" + (m < 10 ? "0" : "") + m + "-" + (x < 10 ? "0" : "") + x; }
+  function fromISO(v){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null; }
+  function uniq(a){ return a.filter(function(v, i){ return v && a.indexOf(v) === i; }); }
+
+  function quarterInfo(key){
+    if(state.extraQ[key]) return state.extraQ[key];
+    for(var i = 0; i < rows.length; i++) if(qKey(rows[i]) === key && rows[i].startRaw) return { year:rows[i].year, q:rows[i].q, startRaw:rows[i].startRaw, endRaw:rows[i].endRaw };
+    var p = key.split(" "); return { year:p[0], q:p[1], startRaw:"", endRaw:"" };
+  }
+  function nextQuarter(){
+    var latest = quarters().list[0], d = new Date();
+    if(!latest) return { year:d.getFullYear(), q:"Q1", start:d, end:new Date(d.getFullYear(), d.getMonth() + 3, 0) };
+    var info = quarterInfo(latest), n = +String(info.q).replace(/\D/g, "") || 4, e = toDate(info.endRaw || "");
+    var start = e ? new Date(e.getFullYear(), e.getMonth(), e.getDate() + 1) : d;
+    return { year:+info.year + (n === 4 ? 1 : 0), q:"Q" + (n % 4 + 1), start:start, end:new Date(start.getFullYear(), start.getMonth() + 3, 0) };
+  }
+
+  function quarterSheet(){
+    var n = nextQuarter();
+    var body = field("Year", '<input id="f-year" type="number" inputmode="numeric" min="2000" max="2099" value="' + n.year + '">') +
+      field("Quarter", '<select id="f-q">' + options(["Q1", "Q2", "Q3", "Q4"], n.q) + '</select>') +
+      field("Starts", '<input id="f-start" type="date" value="' + isoDate(n.start) + '">') +
+      field("Ends", '<input id="f-end" type="date" value="' + isoDate(n.end) + '">') +
+      '<p class="hint-p">The quarter is saved to the sheet when you add its first class.</p>';
+    return formSheet("Add a quarter", "New quarter", "quarter", body, "Create quarter");
+  }
+  function submitQuarter(f){
+    var y = +val(f, "f-year"), q = val(f, "f-q"), st = fromISO(val(f, "f-start")), en = fromISO(val(f, "f-end"));
+    if(!(y >= 2000 && y <= 2099)) return formError(f, "Enter a four-digit year.");
+    if(!st || !en || en <= st) return formError(f, "Pick a start date, and an end date after it.");
+    var key = y + " " + q;
+    if(quarters().list.indexOf(key) < 0) state.extraQ[key] = { year:String(y), q:q, start:st, end:en, startRaw:fmtDate(st), endRaw:fmtDate(en) };
+    state.q = key; state.view = "classes"; state.sheet = null;
+    showToast(key + " is ready. Add its first class to save it to the sheet.", null);
+    render();
+  }
+
+  function addSheet(){
+    var kinds = uniq(["Adult", "College", "High School", "Middle School"].concat(rows.filter(function(c){ return !c.isKid; }).map(function(c){ return c.kind; })));
+    var ages = uniq(rows.filter(function(c){ return c.isKid; }).map(function(c){ return c.age; }));
+    var dl = function(id, list){ return '<datalist id="' + id + '">' + list.map(function(v){ return '<option value="' + esc(v) + '">'; }).join("") + '</datalist>'; };
+    var body = '<div class="seg seg-radio" role="radiogroup" aria-label="Which tab"><label><input type="radio" name="grp" value="adult" checked><span>Adults &amp; teens</span></label><label><input type="radio" name="grp" value="kids"><span>Kids</span></label></div>' +
+      field("Age group", '<input id="f-group" list="dl-adult" autocomplete="off" placeholder="e.g. Adult, High School, 3rd - 5th grades">') +
+      field("Class name (optional)", '<input id="f-name" placeholder="Leave blank for TBD">') +
+      field("Teachers (optional)", '<input id="f-teacher">') +
+      field("Book (optional)", '<input id="f-book">', "adult-only") +
+      field("Type", '<select id="f-type">' + options(["", "OT", "NT", "Topical"], "") + '</select>', "adult-only") +
+      field("Expected headcount (optional)", '<input id="f-est" type="number" inputmode="numeric" min="0" max="999">', "adult-only") +
+      field("Status", '<select id="f-status">' + options(["Idea", "Planned", "Confirmed"], "Planned") + '</select>') +
+      '<p class="hint-p">Planned and Idea classes stay off the dashboard\'s Now Teaching and Up Next until you set them to Confirmed.</p>' +
+      dl("dl-adult", kinds) + dl("dl-kids", ages);
+    return formSheet("Add a class", state.q, "add", body, "Add class");
+  }
+  function submitAdd(f){
+    var info = quarterInfo(state.q), tab = f.querySelector("input[name=grp]:checked").value, group = val(f, "f-group");
+    if(!group) return formError(f, "Pick an age group.");
+    if(!info.startRaw || !info.endRaw) return formError(f, "This quarter has no start and end dates. Create it with + Add quarter first.");
+    var fields = { year:info.year, q:info.q, start:info.startRaw, end:info.endRaw, name:val(f, "f-name") || "TBD", teacher:val(f, "f-teacher"), status:val(f, "f-status") };
+    fields[tab === "adult" ? "kind" : "age"] = group;
+    if(tab === "adult"){ fields.book = val(f, "f-book"); fields.type = val(f, "f-type"); fields.est = val(f, "f-est"); }
+    var dupe = qClasses().some(function(c){ return c.src === tab && (tab === "adult" ? c.kind : c.age).toLowerCase() === group.toLowerCase(); });
+    if(dupe && !window.confirm("There's already a " + group + " class in " + state.q + ". Add another?")) return;
+    setBusy(f, true);
+    send({ action:"add", tab:tab, fields:fields }).then(function(d){
+      rows.push(rowFrom(tab, d.row, fields));
+      delete state.extraQ[state.q];
+      state.sheet = null;
+      showToast("Added " + group + " to " + state.q, null);
+      render();
+    }).catch(function(e){ setBusy(f, false); formError(f, "Couldn't save (" + e.message + ")."); });
+  }
+
+  function editSheet(c){
+    var adult = !c.isKid;
+    var body = field("Teachers", '<input id="f-teacher" value="' + esc(c.teacher) + '">') +
+      field("Class name", '<input id="f-name" value="' + esc(c.name) + '">') +
+      (adult ? field("Book", '<input id="f-book" value="' + esc(c.book) + '">') +
+               field("Type", '<select id="f-type">' + options(["", "OT", "NT", "Topical", "TBD"], c.type) + '</select>') +
+               field("Expected headcount", '<input id="f-est" type="number" inputmode="numeric" min="0" max="999" value="' + esc(c.est) + '">') : "") +
+      field("Notes", '<textarea id="f-notes">' + esc(c.notes) + '</textarea>') +
+      field("Status", '<select id="f-status">' + options(["", "Idea", "Planned", "Confirmed", "Completed"], c.statusRaw) + '</select>') +
+      '<p class="hint-p">Blank status counts as Confirmed. Year, quarter and age group can only be changed in the sheet.</p>';
+    return formSheet(clsTitle(c), ageLabel(c) + " \u00b7 " + c.year + " " + c.q, "edit:" + c.id, body, "Save changes");
+  }
+  function submitEdit(f, c){
+    if(!c) return;
+    var map = { teacher:["f-teacher", c.teacher], name:["f-name", c.name], book:["f-book", c.book], type:["f-type", c.type], est:["f-est", c.est], notes:["f-notes", c.notes], status:["f-status", c.statusRaw] };
+    var changed = {}, n = 0;
+    Object.keys(map).forEach(function(k){
+      if(!f.querySelector("#" + map[k][0])) return;
+      var v = val(f, map[k][0]);
+      if(v !== map[k][1]){ changed[k] = v; n++; }
+    });
+    if(!n){ state.sheet = null; render(); return; }
+    setBusy(f, true);
+    send({ action:"edit", tab:c.src, row:c.sheetRow, expect:expectOf(c), fields:changed }).then(function(){
+      Object.keys(changed).forEach(function(k){ if(k === "status"){ c.statusRaw = changed[k]; c.status = changed[k] || "Confirmed"; } else c[k] = changed[k]; });
+      if("est" in changed) delete c.sizeOverride;
+      state.sheet = null;
+      showToast("Saved changes to " + clsName(c), null);
+      render();
+    }).catch(function(e){ setBusy(f, false); formError(f, "Couldn't save (" + e.message + ")."); });
+  }
+  document.addEventListener("submit", function(e){
+    var f = e.target, id = f && f.getAttribute && f.getAttribute("data-form");
+    if(!id) return;
+    e.preventDefault(); formError(f, "");
+    if(id === "quarter") submitQuarter(f);
+    else if(id === "add") submitAdd(f);
+    else if(id.indexOf("edit:") === 0) submitEdit(f, classById(id.slice(5)));
+  });
+  document.addEventListener("change", function(e){
+    var t = e.target; if(!t || t.name !== "grp") return;
+    var kids = t.value === "kids", f = t.form;
+    [].forEach.call(f.querySelectorAll(".adult-only"), function(el){ el.hidden = kids; });
+    f.querySelector("#f-group").setAttribute("list", kids ? "dl-kids" : "dl-adult");
+  });
+
+  // ---------------------------------------------------------------------------
   // Render
   function renderHeader(){
     var qs = quarters(), sel = $("quarter");
-    sel.innerHTML = qs.list.map(function(k){ return '<option value="' + esc(k) + '">' + esc(k) + (k === qs.now ? " · now" : "") + '</option>'; }).join("");
+    sel.innerHTML = qs.list.map(function(k){ return '<option value="' + esc(k) + '">' + esc(k) + (k === qs.now ? " · now" : "") + '</option>'; }).join("") + '<option value="__add">+ Add quarter…</option>';
     sel.value = state.q;
     $("tab-classes").setAttribute("aria-selected", state.view === "classes");
     $("tab-map").setAttribute("aria-selected", state.view === "map");
@@ -431,7 +576,13 @@
     var prev = root.querySelector(".sheet-body"), sc = prev ? prev.scrollTop : 0;
     if(!s){ root.innerHTML = ""; lastSheetKey = null; document.documentElement.style.overflow = ""; return; }
     var key = s.t + ":" + s.id, fresh = key !== lastSheetKey, inner;
+    var isForm = s.t === "quarter" || s.t === "add" || s.t === "edit";
+    if(isForm && !fresh) return;   // don't wipe what's being typed
+    if(isForm){ state.toast = null; clearTimeout(toastTimer); }   // keep the toast off the Save button
     if(s.t === "class"){ var c = classById(s.id); if(!c){ state.sheet = null; return renderSheet(); } inner = classSheet(c); }
+    else if(s.t === "quarter") inner = quarterSheet();
+    else if(s.t === "add") inner = addSheet();
+    else if(s.t === "edit"){ var ec = classById(s.id); if(!ec){ state.sheet = null; return renderSheet(); } inner = editSheet(ec); }
     else inner = roomSheet(roomById(s.id));
     root.innerHTML = '<div class="backdrop" data-do="close"></div><div class="sheet' + (fresh ? " enter" : "") + '" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1">' + inner + '</div>';
     var body = root.querySelector(".sheet-body");
@@ -487,6 +638,8 @@
         render(); window.scrollTo(0, 0); break;
       }
       case "cancelpick": state.pick = null; render(); break;
+      case "addclass": state.sheet = { t:"add", id:state.q }; render(); break;
+      case "editclass": state.sheet = { t:"edit", id:d.c }; render(); break;
       case "undo": undo(); break;
       case "close": state.sheet = null; render(); break;
     }
@@ -503,7 +656,9 @@
     if(t.hasAttribute("data-small")) state.smallOpen = t.open;
     if(t.hasAttribute("data-nocap")) state.nocapOpen = t.open;
   }, true);
-  $("quarter").addEventListener("change", function(e){ state.q = e.target.value; state.sheet = null; state.pick = null; state.toast = null; render(); });
+  $("quarter").addEventListener("change", function(e){
+    if(e.target.value === "__add"){ e.target.value = state.q; state.sheet = { t:"quarter", id:"new" }; render(); return; }
+    state.q = e.target.value; state.sheet = null; state.pick = null; state.toast = null; render(); });
 
   load();
   window.__planner = { state:state, rows:function(){ return rows; }, locName:locName };
