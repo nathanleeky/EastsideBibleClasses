@@ -510,7 +510,13 @@
   window.EBCFloorplan = {
     render: render, rooms: ROOMS, findRoom: findRoom,
     kids: function(){ return PLAN.kids; },
-    refresh: function(){ if(lastRows) render(lastRows); }
+    refresh: function(){
+      try { document.dispatchEvent(new CustomEvent("ebc:plan")); } catch(e) {}
+      if(lastRows) render(lastRows);
+    },
+    // Used by planner.html: same room list, capacities and headcount rules as the map
+    capacityOf: capacityOf, headcountOfRow: headcountOfRow, parseCSV: parseCSV, findRoomByLoc: findRoom,
+    urls: { kids: KIDS_CSV_URL, demo: DEMO_CSV_URL, rooms: ROOMS_CSV_URL }
   };
   if(window.__ebcRows) render(window.__ebcRows);
   document.addEventListener("ebc:data", function(e){ render(e.detail); });
