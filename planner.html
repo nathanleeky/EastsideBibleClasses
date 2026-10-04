@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Eastside Class Rooms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="planner.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="top-row">
+      <div>
+        <div class="eyebrow">Eastside Church of Christ</div>
+        <h1>Class Rooms</h1>
+      </div>
+      <label class="qsel">
+        <span class="sr">Quarter</span>
+        <select id="quarter"></select>
+      </label>
+    </div>
+    <div class="seg" role="tablist" aria-label="View">
+      <button id="tab-classes" role="tab" data-do="view" data-v="classes" aria-selected="true">Classes</button>
+      <button id="tab-map" role="tab" data-do="view" data-v="map" aria-selected="false">Map</button>
+    </div>
+    <div class="pickbar" id="pickbar" hidden></div>
+  </header>
+  <main id="main"><p class="empty">Loading classes&hellip;</p></main>
+</div>
+<div id="sheet-root"></div>
+<div id="toast-root"></div>
+<script src="floorplan.js"></script>
+<script src="planner.js"></script>
+</body>
+</html>

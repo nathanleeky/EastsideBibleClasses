@@ -4,6 +4,8 @@ Live dashboard of Eastside Church of Christ Bible classes, fed from the Master T
 
 - `dashboard.js` – the whole dashboard (styles, layout, data loading). Reads the "Master: Adult" tab.
 - `floorplan.js` – the "Where Classes Meet" floor plan map. Room shapes and the names that match the sheet's Location column live in the `ROOMS` list at the top. Optionally also reads "Master: Kids", "Kid Demographics" and a "Rooms" tab (see below) to show headcount, capacity and planning-status.
+- `planner.html`, `planner.js`, `planner.css` – the room planner (see below). Reuses the room list, capacities and headcount rules from `floorplan.js`.
+- `apps-script/Code.gs` – the small Google Apps Script that saves room assignments back to the sheet.
 - `index.html` – preview page: https://nathanleeky.github.io/EastsideBibleClasses/
 
 ## Embed (WordPress / Elementor HTML widget)
@@ -48,3 +50,32 @@ Kids' classes get their expected headcount from their `Age` tag (e.g. "3rd - 5th
 June-May school year; Middle School / High School classes use grades 6-8 / 9-12 the same
 way. A room's fill color and each pin's badge turn amber ("Tight fit") or red ("Over
 capacity") once expected headcount gets close to or exceeds that room's capacity.
+
+## Room planner
+
+`planner.html` is a phone-first page for assigning each quarter's classes to rooms: a class list
+("Needs a room" / "Placed"), a bottom sheet with rooms ranked best-fit first, and a floor map
+(Main, 2nd floor, Annex, Apartment) with a pick mode that colors rooms by fit. Every change shows
+an Undo toast. Link to it or embed it in an iframe: https://nathanleeky.github.io/EastsideBibleClasses/planner.html
+
+Where things come from:
+
+- **Classes, teachers, headcounts, capacities:** the same tabs the map already reads (Master: Adult,
+  Master: Kids, Kid Demographics, Rooms). To change a room's capacity, edit the Rooms tab.
+- **Assignments:** the `Location` column on Master: Adult and the `Room #` column on Master: Kids.
+  The planner writes the room's name there (e.g. `Large Classroom 163`, `Apartment Living Room`),
+  so the dashboard and map keep working as before.
+- Expected attendance can be nudged in the class sheet to see how rooms re-rank. That is for
+  planning only and is not saved.
+
+**Turn on saving (one time).** Until this is done the planner runs as a preview and changes reset on reload.
+
+1. Open the Master Tracker sheet > Extensions > Apps Script. Paste in `apps-script/Code.gs`.
+   If your tabs aren't named `Master: Adult` / `Master: Kids`, change the `TABS` list at the top.
+2. Deploy > New deployment > type **Web app**. Execute as **Me**, who has access **Anyone**. Deploy and
+   approve the permissions.
+3. Copy the web app URL (ends in `/exec`) into `SCRIPT_URL` at the top of `planner.js`, and push to `main`.
+
+There is no password: anyone who has the page can change the Location/Room # columns, and nothing
+else in the sheet. The script also checks that a row is still the same class (Year, Q, Kind/Age)
+before writing, so a sheet that was re-sorted can't send a room to the wrong class.
