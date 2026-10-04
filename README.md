@@ -65,6 +65,12 @@ Where things come from:
 - **Assignments:** the `Location` column on Master: Adult and the `Room #` column on Master: Kids.
   The planner writes the room's name there (e.g. `Large Classroom 163`, `Apartment Living Room`),
   so the dashboard and map keep working as before.
+- **Add a quarter:** pick "+ Add quarter..." in the quarter menu, enter the year, quarter and dates. A quarter is
+  saved to the sheet once you add its first class.
+- **Add a class:** "+ Add a class" on the class list appends a row to Master: Adult or Master: Kids (new classes
+  default to status Planned, which keeps them off the dashboard's Now Teaching / Up Next until you set Confirmed).
+- **Edit a class:** "Edit details" in a class's sheet changes teacher, class name, book, type, expected headcount,
+  notes and status. Year, quarter and age group stay editable only in the sheet.
 - Expected attendance can be nudged in the class sheet to see how rooms re-rank. That is for
   planning only and is not saved.
 
@@ -77,6 +83,9 @@ Where things come from:
    approve the permissions.
 3. Copy the web app URL (ends in `/exec`) into `SCRIPT_URL` at the top of `planner.js`, and push to `main`.
 
-There is no password: anyone who has the page can change the Location/Room # columns, and nothing
-else in the sheet. The script also checks that a row is still the same class (Year, Q, Kind/Age)
+There is no password: anyone who has the page can change room assignments, add classes and edit the
+fields above, and nothing else in the sheet. The script also checks that a row is still the same class (Year, Q, Kind/Age)
 before writing, so a sheet that was re-sorted can't send a room to the wrong class.
+
+**After updating `Code.gs`:** paste the new version into your Apps Script project (keep your `SHEET_ID`), then
+Deploy > Manage deployments > pencil > New version > Deploy. The web app URL stays the same.
