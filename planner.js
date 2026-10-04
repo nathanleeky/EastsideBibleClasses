@@ -13,7 +13,7 @@
   var ADULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRdJiH5iDHu2UgeZkPtzBWYq7NWn57DsXteYL6NFNkfCmEWmDIxqUAcCwokBObwozxOaUh-dCEf9Gcx/pub?gid=221404712&single=true&output=csv";
   // Paste the Apps Script web app URL (ends in /exec) here to turn saving on. Until then
   // the planner works as a preview: changes last until you reload.
-  var SCRIPT_URL = window.EBC_SCRIPT_URL || "";
+  var SCRIPT_URL = window.EBC_SCRIPT_URL || "https://script.google.com/macros/s/AKfycbwRnUD7NRCFuxs3MWVj1mitxAmj_uZUVsBG2Oy9L4qSCRH4ORX1TNZlZeAok2yalMeC/exec";
 
   var TIGHT = 0.9;           // at or above this share of capacity = "tight"
   var rows = [];             // every class, adult + kids, all quarters
