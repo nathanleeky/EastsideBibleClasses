@@ -4,9 +4,15 @@
  * and the Room # column of "Master: Kids", and returns current values so the planner shows
  * changes right away instead of waiting for the published CSV to refresh.
  *
- * Setup is in README.md ("Room planner"). Paste this into Extensions > Apps Script in the
- * Master Tracker sheet, then Deploy > New deployment > Web app.
+ * Setup is in README.md ("Room planner"). Create a project at script.google.com (any Google
+ * account with edit access to the sheet), paste this in, set SHEET_ID below, then
+ * Deploy > New deployment > Web app.
  */
+// Paste your Master Tracker sheet's ID here. It's the long text in the sheet's address between
+// /d/ and /edit, e.g. https://docs.google.com/spreadsheets/d/THIS_PART/edit
+// (This lets the script live in any Google account that can edit the sheet.)
+var SHEET_ID = "PASTE_SHEET_ID_HERE";
+
 var TABS = {
   adult: { sheet: "Master: Adult", loc: "Location", keys: ["Year", "Q", "Kind"] },
   kids:  { sheet: "Master: Kids",  loc: "Room #",   keys: ["Year", "Q", "Age"] }
@@ -22,7 +28,7 @@ function headers_(values) {
 
 // GET -> { adult: { "<sheet row>": "<location>" }, kids: { ... } }
 function doGet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), out = {};
+  var ss = SpreadsheetApp.openById(SHEET_ID), out = {};
   Object.keys(TABS).forEach(function (k) {
     var t = TABS[k], sh = ss.getSheetByName(t.sheet), map = {};
     if (sh) {
@@ -43,7 +49,7 @@ function doPost(e) {
     if (req.action !== "set" || !t) throw new Error("bad request");
     var row = Number(req.row), loc = String(req.loc == null ? "" : req.loc).trim();
     if (!(row >= 2) || loc.length > 80) throw new Error("bad row or room name");
-    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(t.sheet);
+    var sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(t.sheet);
     if (!sh) throw new Error("tab not found: " + t.sheet);
     var values = sh.getDataRange().getValues(), hdr = headers_(values), col = hdr.indexOf(t.loc);
     if (col < 0) throw new Error("no \"" + t.loc + "\" column");

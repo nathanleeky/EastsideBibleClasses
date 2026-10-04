@@ -70,8 +70,9 @@ Where things come from:
 
 **Turn on saving (one time).** Until this is done the planner runs as a preview and changes reset on reload.
 
-1. Open the Master Tracker sheet > Extensions > Apps Script. Paste in `apps-script/Code.gs`.
-   If your tabs aren't named `Master: Adult` / `Master: Kids`, change the `TABS` list at the top.
+1. Go to script.google.com (signed in as an account that can edit the Master Tracker) > New project.
+   Paste in `apps-script/Code.gs` and replace `PASTE_SHEET_ID_HERE` with the sheet's ID (the text between
+   `/d/` and `/edit` in its address). If your tabs aren't named `Master: Adult` / `Master: Kids`, change the `TABS` list at the top.
 2. Deploy > New deployment > type **Web app**. Execute as **Me**, who has access **Anyone**. Deploy and
    approve the permissions.
 3. Copy the web app URL (ends in `/exec`) into `SCRIPT_URL` at the top of `planner.js`, and push to `main`.
