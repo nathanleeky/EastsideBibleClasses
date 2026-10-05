@@ -28,13 +28,24 @@
   // Rooms (from floorplan.js)
   var ROOMS = EBC.rooms.filter(function(r){ return r.use !== "service"; });
   var FLOORS = [
-    { key:"main",   label:"Main",      where:"Main floor", min:660, mul:1.75 },
+    { key:"main",   label:"Main",      where:"Main floor", min:0,   mul:1.55 },
     { key:"second", label:"2nd floor", where:"2nd floor",  min:0,   mul:1.55 },
     { key:"annex",  label:"Annex",     where:"Annex",      min:0,   mul:1.05 },
     { key:"apt",    label:"Apartment", where:"Apartment",  min:0,   mul:1.0 }
   ];
-  function floorKey(r){ return r.apt ? "apt" : r.floor === 2 ? "second" : /^annex/.test(r.id) ? "annex" : "main"; }
-  EBC.rooms.forEach(function(r){ r.fk = floorKey(r); });
+  // floorplan.js lays the building out as areas (zones); the planner groups them into four floor tabs
+  var ZONE_FLOOR = { west:"main", aud:"main", second:"second", annex:"annex", apt:"apt" };
+  var ZOFF = {};   // the auditorium is measured from 0,0, so slide it under the west wing on the Main tab
+  (function(){
+    var w = EBC.zones.filter(function(z){ return z.id === "west"; })[0], a = EBC.zones.filter(function(z){ return z.id === "aud"; })[0];
+    if(w && a) ZOFF.aud = [w.box[0] + (w.box[2] - a.box[2]) / 2 - a.box[0], w.box[1] + w.box[3] + 30 - a.box[1]];
+  })();
+  EBC.rooms.forEach(function(r){
+    var o = ZOFF[r.z] || [0, 0];
+    r.fk = ZONE_FLOOR[r.z] || "main";
+    r.pp = r.p.map(function(q){ return [q[0] + o[0], q[1] + o[1]]; });
+    r.ap = [r.at[0] + o[0], r.at[1] + o[1]];
+  });
   function floorOf(key){ return FLOORS.filter(function(f){ return f.key === key; })[0] || FLOORS[0]; }
   function whereOf(r){ return floorOf(r.fk).where; }
   function roomName(r){ return r.apt ? r.name + " (Apartment)" : r.name; }
@@ -270,12 +281,12 @@
   function trunc(t, w, fs){ var m = Math.max(3, Math.floor((w - 8) / (fs * 0.56))); return t.length > m ? t.slice(0, m - 1) + "…" : t; }
   function shortOf(c){ return c.isKid ? (c.age || "Kids") : (c.kind || "Class"); }
   function textLines(r, lines){
-    var b = bbox(r.p), w = b.x1 - b.x0, lh = 0, i;
+    var b = bbox(r.pp), w = b.x1 - b.x0, lh = 0, i;
     for(i = 0; i < lines.length; i++) lh += lines[i].fs + 4;
-    var y = r.at[1] - lh / 2, out = "";
+    var y = r.ap[1] - lh / 2, out = "";
     for(i = 0; i < lines.length; i++){
       var l = lines[i], fs = Math.max(l.fs * 0.65, Math.min(l.fs, (w - 8) / (l.t.length * 0.6)));
-      out += '<text class="' + l.c + '" font-size="' + fs.toFixed(1) + '" x="' + r.at[0] + '" y="' + (y + l.fs * 0.85).toFixed(1) + '" text-anchor="middle">' + esc(trunc(l.t, w, fs)) + '</text>';
+      out += '<text class="' + l.c + '" font-size="' + fs.toFixed(1) + '" x="' + r.ap[0] + '" y="' + (y + l.fs * 0.85).toFixed(1) + '" text-anchor="middle">' + esc(trunc(l.t, w, fs)) + '</text>';
       y += l.fs + 4;
     }
     return out;
@@ -283,7 +294,7 @@
   function roomSVG(r, mul){
     var fs = 11 * mul, fs2 = 10 * mul, pc = state.pick ? classById(state.pick) : null;
     if(r.use === "service"){
-      return '<g class="rm is-space"><polygon class="shape" points="' + pts(r.p) + '"/>' +
+      return '<g class="rm is-space"><polygon class="shape" points="' + pts(r.pp) + '"/>' +
         (r.name ? textLines(r, [{ t:r.name, c:"t-sub", fs:8 * mul }]) : "") + '</g>';
     }
     var o = occupants(r.id), cap = capOf(r), st, lines, label, nameLine = { t:r.name.replace(/^Large Classroom /, "Large ").replace(/^Classroom /, "Rm "), c:"t-name", fs:fs };
@@ -307,7 +318,7 @@
       st = "is-open"; lines = [nameLine, { t:cap != null ? cap + " seats" : "", c:"t-sub", fs:fs2 }]; label = roomName(r) + ", open, " + capTxt;
     }
     return '<g class="rm ' + st + '" data-do="' + (pc ? "pickroom" : "room") + '" data-r="' + r.id + '" tabindex="0" role="button" aria-label="' + esc(label) + '">' +
-      '<polygon class="shape" points="' + pts(r.p) + '"/>' + textLines(r, lines.filter(function(l){ return l.t; })) + '</g>';
+      '<polygon class="shape" points="' + pts(r.pp) + '"/>' + textLines(r, lines.filter(function(l){ return l.t; })) + '</g>';
   }
   function floorTabBadge(fl){
     var pc = state.pick ? classById(state.pick) : null, n = 0, here = pc ? roomOf(pc) : null;
@@ -317,13 +328,6 @@
     });
     return n ? '<b' + (pc ? ' class="fit"' : '') + '>' + n + '</b>' : "";
   }
-  // Building outlines for each floor come from the same slabs floorplan.js draws (indexes into its SLABS list)
-  var SLAB_POLYS = {
-    main:  [[[418,339],[830,339],[830,330],[948,330],[948,400],[1540,400],[1540,1284],[950,1284],[950,809],[777,809],[777,905],[476,905],[476,809],[418,809]], [[870,262],[948,262],[948,330],[870,330]]],
-    annex: [[[945,64],[1339,64],[1339,262],[945,262]]],
-    apt:   [[[425,58],[755,58],[755,294],[425,294]]],
-    second:[]
-  };
   function mapHTML(){
     var fl = floorOf(state.floor), pc = state.pick;
     var tabs = '<div class="floor-tabs" role="group" aria-label="Floor">' + FLOORS.map(function(f){
@@ -333,13 +337,15 @@
       ? '<span><i class="l-good"></i>Fits</span><span><i class="l-tight"></i>Tight</span><span><i class="l-small"></i>Too small</span><span><i class="l-taken"></i>In use</span>'
       : '<span><i class="l-occ"></i>Class meets here</span><span><i class="l-open"></i>Open room</span><span><i class="l-space"></i>Not a classroom</span>';
     var rooms = EBC.rooms.filter(function(r){ return r.fk === fl.key; });
-    var all = []; rooms.forEach(function(r){ all = all.concat(r.p); });
-    var slabs = SLAB_POLYS[fl.key] || [];
-    slabs.forEach(function(s){ all = all.concat(s); });
+    var all = []; rooms.forEach(function(r){ all = all.concat(r.pp); });
+    var zrects = EBC.zones.filter(function(z){ return ZONE_FLOOR[z.id] === fl.key; }).map(function(z){
+      var o = ZOFF[z.id] || [0, 0], x = z.box[0] + o[0], y = z.box[1] + o[1];
+      all = all.concat([[x, y], [x + z.box[2], y + z.box[3]]]);
+      return { x:x, y:y, w:z.box[2], h:z.box[3] };
+    });
     var b = bbox(all), pad = 14, vb = [b.x0 - pad, b.y0 - pad, b.x1 - b.x0 + 2 * pad, b.y1 - b.y0 + 2 * pad];
     var svg = '<svg class="plan" viewBox="' + vb.join(" ") + '" role="group" aria-label="' + esc(fl.where) + ' floor plan"' + (fl.min ? ' style="min-width:' + fl.min + 'px"' : "") + '>';
-    if(fl.key === "second") svg += '<rect class="slab" x="' + vb[0] + '" y="' + vb[1] + '" width="' + vb[2] + '" height="' + vb[3] + '" rx="10"/>';
-    slabs.forEach(function(s){ svg += '<polygon class="slab" points="' + pts(s) + '"/>'; });
+    zrects.forEach(function(z){ svg += '<rect class="slab" x="' + (z.x - 3) + '" y="' + (z.y - 3) + '" width="' + (z.w + 6) + '" height="' + (z.h + 6) + '" rx="8"/>'; });
     svg += rooms.map(function(r){ return roomSVG(r, fl.mul); }).join("");
     if(fl.key === "apt") svg += '<text class="cap-note" font-size="14" x="590" y="316" text-anchor="middle">APARTMENT · ACROSS THE STREET</text>';
     svg += '</svg>';
