@@ -1,104 +1,74 @@
 /*!
- * Eastside Bible Classes: floor plan map
- * Loaded automatically by dashboard.js. Shows each quarter's classes on a simplified
- * floor plan, placed by the sheet's "Location" column.
+ * Eastside Bible Classes: floor plan map (v2)
+ * Loaded automatically by dashboard.js. Shows each quarter's classes on a simplified,
+ * responsive plan, placed by the sheet's "Location" column.
+ *
+ * The building is drawn as separate areas (West Wing, 2nd Floor, Auditorium, Annex,
+ * Apartment). Each area is laid out with HTML boxes so labels never overflow and
+ * the plan reflows from desktop (two columns + class list) down to phones (one column).
  *
  * To make a new location name land on a room, add it to that room's "aka" list below.
- * Coordinates are traced from the 4/3/26 construction package, sheet A-0.3 (lower floor).
+ * Room coordinates are in each area's own units (see that area's "box").
  */
 (function(){
-  // ---------------------------------------------------------------------------
+  // AREAS: box = [x, y, width, height] that the area's rooms are measured in.
+  var ZONES = [
+    { id:"west",   name:"West Wing",  sub:"Ground floor",      box:[420,340,410,336] },
+    { id:"second", name:"2nd Floor",  sub:"Upstairs",          box:[957,400,580,335] },
+    { id:"aud",    name:"Auditorium", sub:"Ground floor",      box:[0,0,580,200] },
+    { id:"annex",  name:"Annex",      sub:"North building",    box:[950,69,389,193] },
+    { id:"apt",    name:"Apartment",  sub:"Across the street", box:[425,58,330,236] }
+  ];
+
+  // Two-column layout on wider screens (stacked on phones)
+  var COLS = [["apt","west"],["annex","second","aud"]];
+
   // ROOMS
-  //   id:   unique key
-  //   name: label drawn on the map
-  //   aka:  other names the sheet's Location column might use (case/spacing ignored)
-  //   r:    [x, y, width, height]  or  p: [[x,y], ...] polygon
-  //   use:  "class" (a classroom) | "space" (lobby, nursery, etc.: can host a class but drawn darker)
-  //         | "service" (restrooms, stairs, mech; darkest, never matched)
-  //   at:   [x, y] where the label/pins go (defaults to center)
-  // ---------------------------------------------------------------------------
+  //   id: unique key · name: label · aka: other Location names (case/spacing ignored)
+  //   z: area id · r: [x, y, width, height] in that area's units
+  //   use: "class" | "space" (can host a class) | "service" (never matched)
   var ROOMS = [
-    // Auditorium wing
-    { id:"auditorium", name:"Auditorium", aka:["aud","main auditorium","sanctuary","117"], use:"space",
-      p:[[947,840],[1540,840],[1540,1146],[1488,1146],[1417,1172],[1394,1221],[1099,1221],[1087,1172],[1004,1146],[947,1146]], at:[1243,1000] },
-    { id:"pulpit", name:"Pulpit", use:"service", p:[[1110,1188],[1383,1188],[1394,1221],[1099,1221]], at:[1246,1206] },
-    { id:"baptistry", name:"", use:"service", r:[1159,1221,178,62] },
-    { id:"chair", name:"Chair Storage", use:"service", r:[950,1146,54,109] },
-    { id:"mech102", name:"Mech", use:"service", p:[[1004,1146],[1087,1172],[1087,1255],[1004,1255]] },
-    { id:"mech114", name:"Mech", use:"service", p:[[1417,1172],[1488,1146],[1488,1255],[1417,1255]] },
-    { id:"commprep", name:"Comm. Prep", use:"service", r:[1488,1146,49,109] },
-    { id:"hall-south", name:"", use:"service", r:[950,1255,587,29] },
+    // West wing
+    { id:"lc165", z:"west", name:"Large Classroom 165", aka:["large classroom 165","classroom 165","room 165","165"], use:"class", r:[420,340,179,162] },
+    { id:"lc164", z:"west", name:"Large Classroom 164", aka:["large classroom 164","classroom 164","room 164","164"], use:"class", r:[420,506,179,170] },
+    { id:"lc163", z:"west", name:"Large Classroom 163", aka:["large classroom 163","classroom 163","room 163","163"], use:"class", r:[649,340,181,167] },
+    { id:"resource", z:"west", name:"Resource Room", aka:["resource room","resource","162"], use:"space", r:[649,509,181,109] },
 
-    // UPPER FLOOR classroom block (sheet A-0.3 upper floor), drawn in place of the ground-floor
-    // offices/lobby/nurseries it sits above. Those ground-floor rooms aren't used for classes.
-    { id:"c208", name:"Classroom 208", aka:["classroom 208","room 208","208"], use:"class", r:[992,400,108,125], floor:2 },
-    { id:"c209", name:"Classroom 209", aka:["classroom 209","room 209","209"], use:"class", r:[1102,400,105,125], floor:2 },
-    { id:"rr-up", name:"Restrooms", use:"service", r:[1210,400,67,128], floor:2 },
-    { id:"c210", name:"Classroom 210", aka:["classroom 210","room 210","210"], use:"class", r:[1280,400,105,125], floor:2 },
-    { id:"c211", name:"Classroom 211", aka:["classroom 211","room 211","211"], use:"class", r:[1387,400,108,125], floor:2 },
-    { id:"stair-uw", name:"Stair", use:"service", r:[957,400,35,150], floor:2 },
-    { id:"stair-ue", name:"Stair", use:"service", r:[1495,400,42,150], floor:2 },
-    { id:"corr203", name:"Corridor", use:"service", r:[957,528,580,57], floor:2 },
-    { id:"c215", name:"Classroom 215", aka:["classroom 215","room 215","215"], use:"class", r:[977,585,98,148], floor:2 },
-    { id:"lc214", name:"Large Classroom 214", aka:["large classroom 214","classroom 214","room 214","214"], use:"class", r:[1075,585,167,148], floor:2 },
-    { id:"lc213", name:"Large Classroom 213", aka:["large classroom 213","classroom 213","room 213","213"], use:"class", r:[1245,585,167,148], floor:2 },
-    { id:"c212", name:"Classroom 212", aka:["classroom 212","room 212","212"], use:"class", r:[1412,585,100,148], floor:2 },
-    { id:"mech201", name:"Mech / Util", use:"service", p:[[952,733],[1537,733],[1537,840],[1445,808],[1222,775],[952,840]], floor:2 },
+    // 2nd floor classroom block
+    { id:"stair-uw", z:"second", name:"", use:"service", r:[957,400,35,125], floor:2 },
+    { id:"c208", z:"second", name:"Classroom 208", aka:["classroom 208","room 208","208"], use:"class", r:[992,400,108,125], floor:2 },
+    { id:"c209", z:"second", name:"Classroom 209", aka:["classroom 209","room 209","209"], use:"class", r:[1100,400,108,125], floor:2 },
+    { id:"rr-up", z:"second", name:"Restrooms", use:"service", vert:1, r:[1208,400,72,125], floor:2 },
+    { id:"c210", z:"second", name:"Classroom 210", aka:["classroom 210","room 210","210"], use:"class", r:[1280,400,107,125], floor:2 },
+    { id:"c211", z:"second", name:"Classroom 211", aka:["classroom 211","room 211","211"], use:"class", r:[1387,400,108,125], floor:2 },
+    { id:"stair-ue", z:"second", name:"", use:"service", r:[1495,400,42,125], floor:2 },
+    { id:"corr203", z:"second", name:"", use:"service", r:[957,528,580,54], floor:2 },
+    { id:"c215", z:"second", name:"Classroom 215", aka:["classroom 215","room 215","215"], use:"class", r:[957,585,118,150], floor:2 },
+    { id:"lc214", z:"second", name:"Large Classroom 214", aka:["large classroom 214","classroom 214","room 214","214"], use:"class", r:[1075,585,170,150], floor:2 },
+    { id:"lc213", z:"second", name:"Large Classroom 213", aka:["large classroom 213","classroom 213","room 213","213"], use:"class", r:[1245,585,167,150], floor:2 },
+    { id:"c212", z:"second", name:"Classroom 212", aka:["classroom 212","room 212","212"], use:"class", r:[1412,585,125,150], floor:2 },
 
-    // Rear lobby + link to annex
-    { id:"rearlobby", name:"Rear Lobby", aka:["rear lobby","141"], use:"space", r:[835,330,113,349], at:[905,505] },
-    { id:"rearentry", name:"", use:"service", r:[870,262,78,68] },
-    { id:"women144", name:"Women", use:"service", r:[835,679,115,71] },
-    { id:"jan143", name:"", use:"service", r:[868,750,82,59] },
+    // Auditorium
+    { id:"auditorium", z:"aud", name:"Auditorium", aka:["aud","main auditorium","sanctuary","117"], use:"space", r:[0,0,580,200] },
 
-    // West classroom wing
-    { id:"lc165", name:"Large Classroom 165", aka:["large classroom 165","classroom 165","room 165","165"], use:"class", r:[425,404,174,159] },
-    { id:"lc164", name:"Large Classroom 164", aka:["large classroom 164","classroom 164","room 164","164"], use:"class", r:[420,570,179,170] },
-    { id:"lc163", name:"Large Classroom 163", aka:["large classroom 163","classroom 163","room 163","163"], use:"class", r:[649,340,181,167] },
-    { id:"resource", name:"Resource Room", aka:["resource room","resource","162"], use:"space", r:[649,509,181,109] },
-    { id:"mail", name:"Mail Room", use:"service", r:[649,679,118,61] },
-    { id:"stor161", name:"", use:"service", r:[769,679,61,61] },
-    { id:"an154", name:"Nursery 154", aka:["additional nursery 154","add'l nursery 154","nursery 154","154"], use:"space", r:[521,740,80,69] },
-    { id:"an148", name:"Nursery 148", aka:["additional nursery 148","add'l nursery 148","nursery 148","148"], use:"space", r:[649,740,59,69] },
-    { id:"men153", name:"Men", use:"service", r:[420,740,101,69] },
-    { id:"women145", name:"Women", use:"service", r:[708,740,122,69] },
-    { id:"westlobby", name:"West Lobby", aka:["west lobby","lobby 155","155"], use:"space",
-      p:[[476,809],[777,809],[777,850],[745,850],[745,890],[710,905],[560,905],[530,890],[520,850],[476,850]], at:[627,857] },
-    { id:"stair167", name:"", use:"service", r:[425,368,170,34] },
-    { id:"corr159", name:"", use:"service", r:[420,340,229,28] },
-    { id:"corr157", name:"", use:"service", r:[599,618,231,61] },
-    { id:"corr158", name:"", use:"service", r:[599,368,50,372] },
+    // Annex (north building): the kids' room numbers used on Master: Kids
+    { id:"annex1", z:"annex", name:"Room 8", aka:["room 8","annex a"], use:"class", r:[950,69,82,150] },
+    { id:"annex1b", z:"annex", name:"Storage", use:"service", r:[950,221,82,41] },
+    { id:"annex2", z:"annex", name:"Room 6", aka:["room 6","annex b"], use:"class", r:[1034,69,132,75] },
+    { id:"annex3", z:"annex", name:"Room 7", aka:["room 7","annex c"], use:"class", r:[1059,146,107,84] },
+    { id:"annex-rr", z:"annex", name:"Restrooms", use:"service", r:[1059,232,107,30] },
+    { id:"annex4", z:"annex", name:"Room 4", aka:["room 4","annex d"], use:"class", r:[1168,69,75,75] },
+    { id:"annex5", z:"annex", name:"Room 5", aka:["room 5","annex e"], use:"class", r:[1168,146,75,116] },
+    { id:"annex6", z:"annex", name:"Room 3", aka:["room 3","annex f"], use:"class", r:[1270,69,69,75] },
+    { id:"annex7", z:"annex", name:"Copier", aka:["copier room","copier","annex g"], use:"service", r:[1270,146,69,54] },
+    { id:"annex8", z:"annex", name:"Room 1", aka:["room 1","annex h"], use:"class", r:[1270,202,69,60] },
 
-    // Detached duplex across the street (we rent one side for classes). Not to scale or position.
-    { id:"apt-up", name:"Upstairs", aka:["upstairs"], use:"class", r:[425,58,234,92], apt:1 },
-    { id:"apt-living", name:"Living Room", aka:["living room","living","front room"], use:"class", r:[425,150,234,144], apt:1 },
-    { id:"apt-bed1", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[659,58,96,92], apt:1 },
-    { id:"apt-bed2", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[659,150,96,144], apt:1 },
-
-    // Existing annex (north building) - the kids' room numbers used on Master: Kids
-    { id:"annex1", name:"Room 8", aka:["room 8","annex a"], use:"class", r:[950,69,82,150] },
-    { id:"annex1b", name:"Storage Closet", use:"service", r:[950,221,82,39] },
-    { id:"annex2", name:"Room 6", aka:["room 6","annex b"], use:"class", r:[1034,69,132,75] },
-    { id:"annex3", name:"Room 7", aka:["room 7","annex c"], use:"class", r:[1059,146,107,84] },
-    { id:"annex-rr", name:"Restrooms", use:"service", r:[1059,232,107,28] },
-    { id:"annex4", name:"Room 4", aka:["room 4","annex d"], use:"class", r:[1168,69,75,75] },
-    { id:"annex5", name:"Room 5", aka:["room 5","annex e"], use:"class", r:[1168,146,75,114] },
-    { id:"annex6", name:"Room 3", aka:["room 3","annex f"], use:"class", r:[1270,69,64,75] },
-    { id:"annex7", name:"Copier Room", aka:["copier room","copier","annex g"], use:"service", r:[1270,146,64,54] },
-    { id:"annex8", name:"Room 1", aka:["room 1","annex h"], use:"class", r:[1270,203,64,57] }
+    // Duplex across the street (we rent one side for classes)
+    { id:"apt-up", z:"apt", name:"Upstairs", aka:["upstairs"], use:"class", r:[425,58,234,92], apt:1 },
+    { id:"apt-bed1", z:"apt", name:"Bedroom 1", aka:["bedroom 1","bed 1","br 1","bedroom one","downstairs bedroom 1"], use:"class", r:[659,58,96,92], apt:1 },
+    { id:"apt-living", z:"apt", name:"Living Room", aka:["living room","living","front room"], use:"class", r:[425,150,234,144], apt:1 },
+    { id:"apt-bed2", z:"apt", name:"Bedroom 2", aka:["bedroom 2","bed 2","br 2","bedroom two","downstairs bedroom 2"], use:"class", r:[659,150,96,144], apt:1 }
   ];
-
-  // Building outlines (drawn under the rooms as the "slab")
-  var SLABS = [
-    [[418,339],[830,339],[830,330],[948,330],[948,400],[1540,400],[1540,1284],[950,1284],[950,809],[777,809],[777,905],[476,905],[476,809],[418,809]],
-    [[945,64],[1339,64],[1339,262],[945,262]],
-    [[870,262],[948,262],[948,330],[870,330]],
-    [[425,58],[755,58],[755,294],[425,294]]
-  ];
-  // Covered drop-offs (dashed, decorative)
-  var CANOPIES = [ [530,905,270,230] ];
-
-  var VIEW = { x:400, y:44, w:1170, h:1256 };
 
   // ---------------------------------------------------------------------------
   // PLANNING DATA (optional). Publish each of these three tabs to the web as CSV,
@@ -293,45 +263,22 @@
     return range ? headcountFor(range, label) : null;
   }
 
-  var CSS = [
-    "#ebc .fp-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;color:#111827}",
-    "#ebc .fp-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}",
-    "#ebc .fp-legend{font-size:12px;color:#6b7280;display:flex;flex-wrap:wrap;gap:14px;align-items:center}",
-    "#ebc .fp-legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-2px}",
-    "#ebc .fp-body{display:grid;grid-template-columns:minmax(0,640px) minmax(240px,1fr);gap:16px;align-items:start}",
-    "#ebc .fp-scroll{overflow-x:auto;border-radius:10px;background:#f9fafb;border:1px solid #f3f4f6}",
-    "#ebc .fp-scroll svg{display:block;width:100%;height:auto}",
-    "#ebc .fp-scroll svg text{font-family:Inter,system-ui,sans-serif}",
-    "#ebc .fp-list{display:flex;flex-direction:column;gap:8px;max-height:690px;overflow-y:auto}",
-    "#ebc .fp-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;cursor:pointer;text-align:left;color:inherit;font:inherit;width:100%}",
-    "#ebc .fp-item:hover,#ebc .fp-item.on{border-color:#0b8ed8;background:#f0f9ff}",
-    "#ebc .fp-item .rm{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#0b8ed8}",
-    "#ebc .fp-item .ti{font-size:14px;font-weight:600;color:#111827;margin:2px 0}",
-    "#ebc .fp-item .me{font-size:12px;color:#6b7280}",
-    "#ebc .fp-item.off{cursor:default;opacity:.8}",
-    "#ebc .fp-item.off .rm{color:#b45309}",
-    "#ebc .fp-empty{font-size:13px;color:#6b7280;padding:8px}",
-    "@media (max-width:820px){#ebc .fp-body{grid-template-columns:1fr}#ebc .fp-scroll svg{min-width:600px;max-height:none}#ebc .fp-list{max-height:none}}",
-    "@media (max-width:640px){#ebc .fp-wrap{padding:12px;border-radius:14px}#ebc .fp-top{gap:8px}#ebc .fp-legend{font-size:11px;gap:10px}#ebc .fp-item{padding:10px 12px;border-radius:12px}#ebc .fp-warn{font-size:12px;padding:8px 10px;border-radius:10px}}",
-    "#ebc .fp-room{transition:fill .2s}",
-    "#ebc .fp-pin{cursor:pointer}",
-    "#ebc .fp-pin:hover .fp-dot, #ebc .fp-pin.on .fp-dot{fill:#0b8ed8;stroke:#0b8ed8}",
-    "#ebc .fp-pin:hover path, #ebc .fp-pin.on path{stroke:#fff}",
-    "#ebc .fp-hint{margin-top:10px;font-size:12px;color:#9ca3af}",
-    "#ebc .fp-warn{margin:0 0 12px;font-size:12.5px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:8px 12px}",
-    "#ebc .fp-chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;margin-left:6px;vertical-align:1px}",
-    "#ebc .fp-chip.ok{background:#d1fae5;color:#047857}",
-    "#ebc .fp-chip.tight{background:#fef3c7;color:#b45309}",
-    "#ebc .fp-chip.over{background:#fee2e2;color:#b91c1c}",
-    "#ebc .fp-chip.status{background:#f3f4f6;color:#4b5563;text-transform:uppercase}",
-    "#ebc .fp-item .badges{margin-top:4px}"
-  ].join("\n");
+
+  var CSS = "#ebc .fp-wrap{container:fpw/inline-size;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:16px;color:#111827}\n#ebc .fp-top{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}\n#ebc .fp-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:#6b7280}\n#ebc .fp-legend span{display:inline-flex;align-items:center;gap:6px}\n#ebc .fp-legend i{width:12px;height:12px;border-radius:3px;border:1.5px solid;box-sizing:border-box}\n#ebc .fp-warn{border:1px solid #fde68a;background:#fffbeb;border-radius:10px;font-size:13px;color:#92400e}\n#ebc .fp-warn summary{cursor:pointer;padding:10px 14px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px}\n#ebc .fp-warn summary::-webkit-details-marker{display:none}\n#ebc .fp-warn summary:before{content:\"\";width:8px;height:8px;border-radius:50%;background:#f59e0b;flex-shrink:0}\n#ebc .fp-warn summary:after{content:\"Show\";margin-left:auto;font-weight:500;color:#b45309}\n#ebc .fp-warn[open] summary:after{content:\"Hide\"}\n#ebc .fp-warn ul{margin:0;padding:0 14px 12px 30px;display:flex;flex-direction:column;gap:4px}\n#ebc .fp-body{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;align-items:start}\n#ebc .fp-map{display:grid;gap:18px 16px;grid-template-columns:minmax(0,1fr);grid-template-areas:\"west\" \"second\" \"aud\" \"annex\" \"apt\";align-items:start}\n#ebc .fp-col{display:contents}\n#ebc .fp-zone{display:flex;flex-direction:column;gap:8px;min-width:0}\n#ebc .fp-zone header{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px}\n#ebc .fp-zone header b,#ebc .fp-zone header span{white-space:nowrap}\n#ebc .fp-zone header b{font-size:13px;font-weight:600;color:#111827}\n#ebc .fp-zone header span{font-size:12px;color:#9ca3af}\n#ebc .fp-plan{position:relative;background:#f9fafb;border:1px solid #eef0f3;border-radius:10px}\n#ebc .fp-in{position:absolute;inset:6px;container-type:inline-size}\n#ebc .fp-rm{position:absolute;box-sizing:border-box;background:#fff;border:1px solid #e2e8f0;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:2px;overflow:hidden;text-align:center;line-height:1.15;transition:background .15s,border-color .15s,box-shadow .15s}\n#ebc .fp-rm .m{font-size:clamp(10px,3cqw,15px);font-weight:600;color:#334155}\n#ebc .fp-rm .s{font-size:clamp(8px,2cqw,11px);color:#94a3b8}\n#ebc .fp-rm.u-space{border-style:dashed;border-color:#cbd5e1}\n#ebc .fp-rm.u-service{background:#f1f3f5;border-color:#f1f3f5}\n#ebc .fp-rm.u-service .m{font-size:clamp(7px,1.8cqw,10px);font-weight:500;color:#9ca3af;text-transform:uppercase;letter-spacing:.04em}\n#ebc .fp-rm.v .m{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap}\n#ebc .fp-rm.act{cursor:pointer;background:#e0f2fe;border:1.5px solid #0b8ed8}\n#ebc .fp-rm.act .m{color:#0369a1}\n#ebc .fp-rm.act .s{display:none}\n#ebc .fp-rm.act.f-tight{background:#fef3c7;border-color:#f59e0b}\n#ebc .fp-rm.act.f-tight .m{color:#b45309}\n#ebc .fp-rm.act.f-over{background:#fee2e2;border-color:#ef4444}\n#ebc .fp-rm.act.f-over .m{color:#b91c1c}\n#ebc .fp-rm.act:hover,#ebc .fp-rm.act.on,#ebc .fp-rm.act:focus-visible{box-shadow:0 0 0 3px rgba(11,142,216,.28);z-index:2;outline:none}\n#ebc .fp-rm .bd{display:flex;flex-wrap:wrap;justify-content:center;gap:3px;max-width:100%}\n#ebc .fp-b{font-style:normal;display:inline-flex;align-items:center;justify-content:center;min-width:clamp(16px,4.4cqw,22px);height:clamp(16px,4.4cqw,22px);padding:0 4px;box-sizing:border-box;border-radius:999px;background:#0b8ed8;color:#fff;font-size:clamp(9px,2.4cqw,12px);font-weight:600;font-variant-numeric:tabular-nums;flex-shrink:0}\n#ebc .fp-b.f-tight{background:#d97706}\n#ebc .fp-b.f-over{background:#dc2626}\n#ebc .fp-b.d{background:#fff;color:#0b8ed8;border:1.5px dashed #0b8ed8}\n#ebc .fp-b.x{background:#f3f4f6;color:#9ca3af}\n#ebc .fp-rm .fp-b.on{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #111827}\n#ebc .fp-pop{display:none}\n#ebc .fp-pop.show{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid #bae6fd;border-radius:10px;background:#f0f9ff}\n#ebc .fp-pop-h{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:600;color:#0369a1}\n#ebc .fp-pop-h button{font:inherit;font-size:12px;font-weight:500;color:#6b7280;background:none;border:0;padding:4px 6px;cursor:pointer}\n#ebc .fp-side{display:flex;flex-direction:column;gap:10px;min-width:0}\n#ebc .fp-side-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;color:#6b7280}\n#ebc .fp-side-h span{white-space:nowrap}\n#ebc .fp-side-h b{font-size:13px;font-weight:600;color:#111827}\n#ebc .fp-list{position:relative;display:flex;flex-direction:column;gap:8px}\n#ebc .fp-item{display:flex;gap:12px;align-items:flex-start;text-align:left;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px;font:inherit;color:inherit;width:100%;box-sizing:border-box;cursor:pointer;transition:border-color .15s,background .15s}\n#ebc .fp-item:hover,#ebc .fp-item.on{border-color:#0b8ed8;background:#f0f9ff}\n#ebc .fp-item.static{cursor:default}\n#ebc .fp-item.static:hover{border-color:#e5e7eb;background:#fff}\n#ebc .fp-item .fp-b{width:24px;height:24px;min-width:24px;font-size:12px;margin-top:1px}\n#ebc .fp-item .tx{min-width:0;display:flex;flex-direction:column;gap:2px}\n#ebc .fp-item .rm{font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#0b8ed8}\n#ebc .fp-item.off .rm{color:#b45309}\n#ebc .fp-item .ti{font-size:14px;font-weight:600;color:#111827;line-height:1.3}\n#ebc .fp-item .me{font-size:12px;color:#6b7280}\n#ebc .fp-item .badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}\n#ebc .fp-chip{display:inline-block;white-space:nowrap;font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}\n#ebc .fp-chip.ok{background:#d1fae5;color:#047857}\n#ebc .fp-chip.tight{background:#fef3c7;color:#b45309}\n#ebc .fp-chip.over{background:#fee2e2;color:#b91c1c}\n#ebc .fp-chip.status{background:#f3f4f6;color:#4b5563;text-transform:uppercase}\n#ebc .fp-empty{font-size:13px;color:#6b7280;padding:16px;border:1px dashed #d1d5db;border-radius:10px;text-align:center}\n#ebc .fp-hint{font-size:12px;color:#9ca3af}\n@container fpw (min-width:600px){#ebc .fp-map{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:none;align-items:stretch}#ebc .fp-col{display:flex;flex-direction:column;gap:18px;min-width:0}#ebc .fp-col>.fp-zone:last-child{flex:1 1 auto}#ebc .fp-col>.fp-zone:last-child .fp-plan{flex:1 1 auto}}\n@container fpw (min-width:980px){#ebc .fp-body{grid-template-columns:minmax(0,1fr) 300px;align-items:stretch}#ebc .fp-side{height:0;min-height:100%}#ebc .fp-list{flex:1 1 0;min-height:0;overflow-y:auto;padding-right:4px}#ebc .fp-pop.show{display:none}}";
+
+  function lab(r){
+    var m = /^(.*?)\s*(\d{3})$/.exec(r.name);
+    return (m && m[1]) ? { m:m[2], s:m[1] } : { m:r.name, s:"" };
+  }
+  var pct = function(v){ return (Math.round(v * 1000) / 1000) + "%"; };
+  var isDraft = function(c){ return c.status === "Idea" || c.status === "Planned"; };
+  var titleOf = function(c){ return (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : "Title TBD"; };
 
   function render(rows){
     var host = document.getElementById("ebc-map"); if(!host) return;
-    if(!document.getElementById("ebc-fp-css")){
-      var st = document.createElement("style"); st.id = "ebc-fp-css"; st.textContent = CSS; document.head.appendChild(st);
-    }
+    var st = document.getElementById("ebc-fp-css");
+    if(!st){ st = document.createElement("style"); st.id = "ebc-fp-css"; document.head.appendChild(st); }
+    if(st.textContent !== CSS) st.textContent = CSS;
     lastRows = rows;
     rows = rows.concat(PLAN.kids);
 
@@ -348,20 +295,7 @@
     if(!qlist.length){ host.innerHTML = ""; return; }
     var sel = host.getAttribute("data-q") || current || qlist[0];
 
-    host.innerHTML =
-      '<div class="fp-wrap">' +
-        '<div class="fp-top"><select id="ebc-fp-q">' + qlist.map(function(q){
-            return '<option' + (q === sel ? ' selected' : '') + '>' + esc(q) + (q === current ? ' (now)' : '') + '</option>'; }).join("") +
-          '</select><div class="fp-legend"><span><i style="background:#e0f2fe"></i>Class meets here</span><span><i style="background:#f1f5f9"></i>Classroom</span><span><i style="background:#fafafa;border:1px solid #cbd5e1;box-sizing:border-box"></i>Other</span><span><i style="border:2px dashed #f59e0b;box-sizing:border-box"></i>2nd floor</span><span><i style="background:#fef3c7"></i>Tight fit</span><span><i style="background:#fee2e2"></i>Over capacity</span></div></div>' +
-        '<div id="ebc-fp-warn"></div>' +
-        '<div class="fp-body"><div class="fp-scroll"></div><div class="fp-list" id="ebc-fp-list"></div></div>' +
-        '<div class="fp-hint">Hover or tap a pin or a class to match them up.</div>' +
-      '</div>';
-    host.querySelector("#ebc-fp-q").addEventListener("change", function(e){
-      host.setAttribute("data-q", e.target.value.replace(/ \(now\)$/, "")); render(lastRows);
-    });
-
-    // Classes for the chosen quarter, grouped by room, each with headcount/capacity/fit worked out
+    // Classes for the chosen quarter, grouped by room, with headcount/capacity/fit
     var byRoom = {}, unplaced = [], warnings = [];
     rows.filter(function(r){ return (r.year + " " + r.q) === sel; }).forEach(function(r){
       var room = findRoom(r.loc);
@@ -373,148 +307,133 @@
         (byRoom[room.id] = byRoom[room.id] || []).push(r);
       } else unplaced.push(r);
     });
+    var roomById = {}; ROOMS.forEach(function(r){ roomById[r.id] = r; });
+    var zoneById = {}; ZONES.forEach(function(z){ zoneById[z.id] = z; });
     Object.keys(byRoom).forEach(function(id){
-      var room = ROOMS.filter(function(r){ return r.id === id; })[0], list = byRoom[id];
-      var total = 0, any = false;
+      var room = roomById[id], list = byRoom[id], total = 0, any = false;
       list.forEach(function(c){ if(c.headcount != null){ total += c.headcount; any = true; } });
       var cap = capacityOf(id);
-      if(any && cap != null && total > cap) warnings.push((room.name || id) + ": " + total + " expected, room seats " + cap);
-      list.forEach(function(c){
-        var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : (c.kind || "Class");
-        if(c.status === "Idea" || c.status === "Planned") warnings.push(title + " (" + room.name + ") is still \"" + c.status + "\", not confirmed");
-      });
+      if(any && cap != null && total > cap) warnings.push(room.name + ": " + total + " expected, room seats " + cap);
+      list.forEach(function(c){ if(isDraft(c)) warnings.push(titleOf(c) + " (" + room.name + ") is still \u201c" + c.status + "\u201d, not confirmed"); });
     });
-    var mismatched = unplaced.filter(function(r){ return r.loc; }).length;
-    if(mismatched) warnings.push(mismatched + " class" + (mismatched > 1 ? "es" : "") + " list a Location that doesn't match a room on the map yet");
-    host.querySelector("#ebc-fp-warn").innerHTML = warnings.length
-      ? '<div class="fp-warn">\u26a0\ufe0f ' + warnings.map(esc).join(' &nbsp;\u00b7&nbsp; ') + '</div>' : "";
+    var mismatched = unplaced.filter(function(r){ return r.loc; });
+    mismatched.forEach(function(r){ warnings.push("\u201c" + r.loc + "\u201d (" + titleOf(r) + ") doesn\u2019t match a room on the map"); });
 
-    var svg = document.createElementNS(NS, "svg");
-    svg.setAttribute("viewBox", [VIEW.x, VIEW.y, VIEW.w, VIEW.h].join(" "));
-    svg.setAttribute("role", "img");
-    svg.setAttribute("aria-label", "Floor plan showing where classes meet in " + sel);
-    var h = [];
-    h.push('<defs><filter id="fpglow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6"/></filter></defs>');
-
-    // canopies
-    CANOPIES.forEach(function(c){
-      h.push('<rect x="'+c[0]+'" y="'+c[1]+'" width="'+c[2]+'" height="'+c[3]+'" fill="none" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="8 6" rx="4"/>');
-    });
-    // slab shadow (fake wall height) then slab
-    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s.map(function(q){ return [q[0]+7, q[1]+10]; }))+'" fill="#e5e7eb"/>'); });
-    SLABS.forEach(function(s){ h.push('<polygon points="'+pts(s)+'" fill="#ffffff" stroke="#cbd5e1" stroke-width="5" stroke-linejoin="round"/>'); });
-
-    // rooms (tinted amber/red instead of teal when this quarter's headcount is tight/over capacity)
-    var FIT_GLOW = { ok:"#0b8ed8", tight:"#d97706", over:"#dc2626" }, FIT_FILL = { ok:"#e0f2fe", tight:"#fef3c7", over:"#fee2e2" };
-    ROOMS.forEach(function(r){
-      var used = !!byRoom[r.id];
-      var worst = used ? (byRoom[r.id].some(function(c){ return c.fit === "over"; }) ? "over" : byRoom[r.id].some(function(c){ return c.fit === "tight"; }) ? "tight" : "ok") : null;
-      var fill = used ? FIT_FILL[worst] : (r.use === "class" ? "#f1f5f9" : "#fafafa");
-      if(used) h.push('<polygon points="'+pts(r.p)+'" fill="'+FIT_GLOW[worst]+'" opacity=".35" filter="url(#fpglow)"/>');
-      h.push('<polygon class="fp-room" points="'+pts(r.p)+'" fill="'+fill+'" stroke="#cbd5e1" stroke-width="2.5" stroke-linejoin="round"/>');
-    });
-    // caption for the detached apartment
-    h.push('<text x="590" y="316" text-anchor="middle" font-size="15" fill="#94a3b8" font-family="Inter,system-ui,sans-serif" letter-spacing="1">APARTMENT \u00b7 ACROSS THE STREET</text>');
-
-    // mark the upper-floor block
-    h.push('<rect x="949" y="397" width="591" height="446" fill="none" stroke="#f59e0b" stroke-width="2" stroke-dasharray="10 6" rx="3" opacity=".7"/>');
-    h.push('<rect x="1163" y="358" width="160" height="30" rx="15" fill="#f59e0b"/><text x="1243" y="379" text-anchor="middle" font-size="16" font-weight="700" fill="#ffffff" font-family="Inter,system-ui,sans-serif" letter-spacing="1">2ND FLOOR</text>');
-
-    // faint pew rows in the auditorium, for a sense of place
-    var aud = ROOMS.filter(function(r){ return r.id === "auditorium"; })[0];
-    h.push('<clipPath id="fpaud"><polygon points="'+pts(aud.p)+'"/></clipPath><g clip-path="url(#fpaud)" stroke="#0f172a" stroke-opacity=".06" stroke-width="3">');
-    for(var py = 880; py <= 1150; py += 16){
-      var bow = (py - 880) * 0.18;
-      h.push('<path d="M975 '+(py - bow)+' Q1243 '+(py + 40 - bow)+' 1512 '+(py - bow)+'" fill="none"/>');
-    }
-    h.push('</g>');
-
-    // room labels (skip rooms that have pins; the pin shows the room name instead)
-    ROOMS.forEach(function(r){
-      if(!r.name || byRoom[r.id]) return;
-      var big = r.use !== "service";
-      var xs = r.p.map(function(q){ return q[0]; }), wid = Math.max.apply(0,xs) - Math.min.apply(0,xs);
-      var fs = Math.max(big ? 9 : 6.5, Math.min(big ? 14 : 11, (wid - 6) / (r.name.length * (big ? 0.66 : 0.72))));
-      h.push('<text x="'+r.at[0]+'" y="'+(r.at[1]+4)+'" text-anchor="middle" font-size="'+fs.toFixed(1)+'" fill="'+(r.use === "class" ? "#475569" : big ? "#94a3b8" : "#9ca3af")+'" font-family="Inter,system-ui,sans-serif"'+(big ? ' letter-spacing=".5"' : '')+'>'+esc(r.name.toUpperCase())+'</text>');
-    });
-
-    // pins
-    var pinIndex = [], pinRoom = [];
-    Object.keys(byRoom).forEach(function(id){
-      var room = ROOMS.filter(function(r){ return r.id === id; })[0];
-      var list = byRoom[id], n = list.length;
-      var xs = room.p.map(function(q){ return q[0]; }), ys = room.p.map(function(q){ return q[1]; });
-      var top = Math.min.apply(0, ys), bottom = Math.max.apply(0, ys), wid = Math.max.apply(0, xs) - Math.min.apply(0, xs);
-      // space for pins: below a title band at the top of the room (a bit more when a
-      // headcount/status line is going to print under each pin's title)
-      var hasSub = list.some(function(c){ return c.headcount != null || c.status === "Idea" || c.status === "Planned"; });
-      var areaTop = top + 30, areaBot = bottom - 6;
-      var gap = Math.max(hasSub ? 62 : 46, Math.min(hasSub ? 84 : 66, (areaBot - areaTop) / n));
-      var mid = Math.min((areaTop + areaBot) / 2, room.at[1] + 10);
-      var y0 = mid - (n - 1) * gap / 2 - 11;            // circle sits above its label, so nudge up
-      var titleY = Math.max(top + 19, y0 - (hasSub ? 40 : 36)); // tag sits just above the pins, never outside the room
-      var tfs = Math.max(10, Math.min(14, (wid - 8) / (room.name.length * 0.7)));
-      h.push('<text x="'+room.at[0]+'" y="'+titleY+'" text-anchor="middle" font-size="'+tfs.toFixed(1)+'" fill="#0b8ed8" font-family="Inter,system-ui,sans-serif" letter-spacing="1">'+esc(room.name.toUpperCase())+'</text>');
-      var FIT_TXT = { ok:"#047857", tight:"#d97706", over:"#dc2626" };
-      list.forEach(function(c, i){
-        var x = room.at[0], y = y0 + i * gap, idx = pinIndex.push(c) - 1; pinRoom[idx] = room.name + (room.apt ? " (Apartment)" : room.floor === 2 ? " (2nd floor)" : "");
-        // Just the age group on the pin - that's what matters at a glance here.
-        var title = (c.isKid ? (c.age || c.kind) : c.kind) || "Class";
-        if(title.length > 24) title = title.slice(0, 22) + "\u2026";
-        var draft = c.status === "Idea" || c.status === "Planned";
-        var sub = c.headcount != null ? (c.headcount + (c.cap != null ? " / " + c.cap : "")) + (draft ? " \u00b7 " + c.status : "") : (draft ? c.status : "");
-        var lfs = Math.max(13, Math.min(16, (wid + 36) / (title.length * 0.58)));
-        h.push('<g class="fp-pin" data-i="'+idx+'" tabindex="0">' +
-          '<circle class="fp-dot" cx="'+x+'" cy="'+y+'" r="15" fill="#ffffff" stroke="#0b8ed8" stroke-width="2.2"' + (draft ? ' stroke-dasharray="4 3"' : '') + '/>' +
-          // little open-book icon
-          '<path d="M'+(x-7)+' '+(y-4)+' q3.5 -2.6 7 0 q3.5 -2.6 7 0 v9 q-3.5 -2.6 -7 0 q-3.5 -2.6 -7 0 z M'+x+' '+(y-4)+' v9" fill="none" stroke="#0b8ed8" stroke-width="1.5" stroke-linejoin="round"/>' +
-          '<text x="'+x+'" y="'+(y + 17 + lfs)+'" text-anchor="middle" font-size="'+lfs.toFixed(1)+'" font-weight="600" fill="#111827" font-family="Inter,system-ui,sans-serif" paint-order="stroke" stroke="#ffffff" stroke-width="4">'+esc(title)+'</text>' +
-          (sub ? '<text x="'+x+'" y="'+(y + 28 + lfs)+'" text-anchor="middle" font-size="10.5" font-weight="600" fill="'+(c.fit ? FIT_TXT[c.fit] : "#6b7280")+'" font-family="Inter,system-ui,sans-serif" paint-order="stroke" stroke="#ffffff" stroke-width="4">'+esc(sub)+'</text>' : '') +
-        '</g>');
-      });
-    });
-
-    svg.innerHTML = h.join("");
-    host.querySelector(".fp-scroll").appendChild(svg);
-
-    // side list: placed classes (linked to pins) then any that aren't on the map
-    var list = host.querySelector("#ebc-fp-list");
-    var item = function(c, room, i){
-      var meta = [c.kind, c.teacher].filter(Boolean).join(" \u00b7 ");
-      var title = (c.name && !/^\s*tbd\s*$/i.test(c.name)) ? c.name : "Title TBD";
-      var badges = "";
-      if(c.headcount != null) badges += '<span class="fp-chip ' + (c.fit || "ok") + '">' + c.headcount + (c.cap != null ? " / " + c.cap : "") + '</span>';
-      if(c.status && c.status !== "Confirmed" && c.status !== "Completed") badges += '<span class="fp-chip status">' + esc(c.status) + '</span>';
-      return '<button type="button" class="fp-item' + (i < 0 ? ' off' : '') + '"' + (i < 0 ? '' : ' data-i="' + i + '"') + '>' +
-        '<div class="rm">' + esc(room) + '</div><div class="ti">' + esc(title) + '</div><div class="me">' + esc(meta) + '</div>' +
-        (badges ? '<div class="badges">' + badges + '</div>' : '') + '</button>';
+    // Number classes in map order: area by area, room by room
+    var placed = [];
+    ZONES.forEach(function(z){ ROOMS.forEach(function(r){
+      if(r.z === z.id && byRoom[r.id]) byRoom[r.id].forEach(function(c){ c._room = r; c._i = placed.push(c) - 1; });
+    }); });
+    var worst = function(id){
+      var l = byRoom[id];
+      return l.some(function(c){ return c.fit === "over"; }) ? "over" : l.some(function(c){ return c.fit === "tight"; }) ? "tight" : "ok";
     };
-    list.innerHTML = (pinIndex.map(function(c, i){ return item(c, pinRoom[i], i); }).join("") +
-      unplaced.map(function(c){ return item(c, "Not on map: " + (c.loc || "no location"), -1); }).join("")) ||
-      '<div class="fp-empty">No classes scheduled for this quarter yet.</div>';
+    var badge = function(c){ return '<i class="fp-b f-' + (c.fit || "ok") + (isDraft(c) ? " d" : "") + '" data-i="' + c._i + '">' + (c._i + 1) + '</i>'; };
+    var roomLabel = function(r){ return r.name + " \u00b7 " + zoneById[r.z].name; };
 
-    function select(i){
-      [].forEach.call(host.querySelectorAll(".fp-pin.on,.fp-item.on"), function(el){ el.classList.remove("on"); });
-      var pin = svg.querySelector('.fp-pin[data-i="' + i + '"]'), it = list.querySelector('.fp-item[data-i="' + i + '"]');
-      if(pin) pin.classList.add("on");
-      if(it){ it.classList.add("on"); if(list.scrollHeight > list.clientHeight) it.scrollIntoView({ block:"nearest" }); }
+    var zoneHtml = {};
+    ZONES.forEach(function(z){
+      var b = z.box;
+      var rooms = ROOMS.filter(function(r){ return r.z === z.id; }).map(function(r){
+        var list = byRoom[r.id], L = lab(r);
+        var style = "left:calc(" + pct((r.r[0]-b[0])/b[2]*100) + " + 1.5px);top:calc(" + pct((r.r[1]-b[1])/b[3]*100) + " + 1.5px);" +
+          "width:calc(" + pct(r.r[2]/b[2]*100) + " - 3px);height:calc(" + pct(r.r[3]/b[3]*100) + " - 3px)";
+        return '<div class="fp-rm u-' + r.use + (r.vert ? " v" : "") + (list ? " act f-" + worst(r.id) : "") + '" data-room="' + r.id + '" style="' + style + '"' +
+          (list ? ' tabindex="0" role="button" aria-label="' + esc(r.name + ": " + list.length + " class" + (list.length > 1 ? "es" : "")) + '"' : "") + '>' +
+          '<span class="m">' + esc(L.m) + '</span>' + (L.s ? '<span class="s">' + esc(L.s) + '</span>' : "") +
+          (list ? '<span class="bd">' + list.map(badge).join("") + '</span>' : "") + '</div>';
+      }).join("");
+      zoneHtml[z.id] = '<section class="fp-zone" style="grid-area:' + z.id + '"><header><b>' + esc(z.name) + '</b><span>' + esc(z.sub) + '</span></header>' +
+        '<div class="fp-plan" style="aspect-ratio:' + (b[2] + 12) + ' / ' + (b[3] + 12) + '"><div class="fp-in">' + rooms + '</div></div>' +
+        '<div class="fp-pop" data-zone="' + z.id + '"></div></section>';
+    });
+    var zonesHtml = COLS.map(function(col){
+      return '<div class="fp-col">' + col.map(function(id){ return zoneHtml[id] || ""; }).join("") + '</div>';
+    }).join("");
+
+    var item = function(c, room, tag){
+      var meta = [c.kind, c.teacher].filter(Boolean).join(" \u00b7 "), chips = "";
+      if(c.headcount != null) chips += '<span class="fp-chip ' + (c.fit || "ok") + '">' + c.headcount + (c.cap != null ? " / " + c.cap : "") + ' expected</span>';
+      if(c.status && c.status !== "Confirmed" && c.status !== "Completed") chips += '<span class="fp-chip status">' + esc(c.status) + '</span>';
+      var off = c._i == null;
+      return '<' + tag + (tag === "button" ? ' type="button"' : "") + ' class="fp-item' + (off ? " off" : "") + (tag === "div" ? " static" : "") + '"' +
+        (off ? "" : ' data-i="' + c._i + '" data-room="' + c._room.id + '"') + '>' +
+        (off ? '<i class="fp-b x">?</i>' : badge(c)) +
+        '<span class="tx"><span class="rm">' + esc(room) + '</span><span class="ti">' + esc(titleOf(c)) + '</span>' +
+        (meta ? '<span class="me">' + esc(meta) + '</span>' : "") + (chips ? '<span class="badges">' + chips + '</span>' : "") + '</span></' + tag + '>';
+    };
+    var listHtml = placed.map(function(c){ return item(c, roomLabel(c._room), "button"); }).join("") +
+      unplaced.map(function(c){ return item(c, c.loc ? "Not on map: " + c.loc : "No location yet", "div"); }).join("");
+    var nRooms = Object.keys(byRoom).length;
+
+    host.innerHTML =
+      '<div class="fp-wrap">' +
+        '<div class="fp-top"><select id="ebc-fp-q" aria-label="Quarter">' + qlist.map(function(q){
+            return '<option value="' + esc(q) + '"' + (q === sel ? " selected" : "") + '>' + esc(q) + (q === current ? " (now)" : "") + '</option>'; }).join("") + '</select>' +
+          '<div class="fp-legend">' +
+            '<span><i style="background:#e0f2fe;border-color:#0b8ed8"></i>Class meets here</span>' +
+            '<span><i style="background:#fef3c7;border-color:#f59e0b"></i>Tight fit</span>' +
+            '<span><i style="background:#fee2e2;border-color:#ef4444"></i>Over capacity</span>' +
+            '<span><i style="background:#fff;border-color:#e2e8f0"></i>Open room</span>' +
+          '</div></div>' +
+        (warnings.length ? '<details class="fp-warn"><summary>' + warnings.length + (warnings.length > 1 ? " things" : " thing") + ' to check</summary><ul>' +
+          warnings.map(function(w){ return "<li>" + esc(w) + "</li>"; }).join("") + '</ul></details>' : "") +
+        '<div class="fp-body"><div class="fp-map">' + zonesHtml + '</div>' +
+          '<div class="fp-side"><div class="fp-side-h"><b>' + esc(sel) + '</b><span>' + placed.length + " class" + (placed.length === 1 ? "" : "es") + " in " + nRooms + " room" + (nRooms === 1 ? "" : "s") + '</span></div>' +
+            '<div class="fp-list">' + (listHtml || '<div class="fp-empty">No classes scheduled for this quarter yet.</div>') + '</div>' +
+            '<div class="fp-hint">Tap a highlighted room or a class to match them up.</div></div>' +
+        '</div>' +
+      '</div>';
+
+    host.querySelector("#ebc-fp-q").addEventListener("change", function(e){ host.setAttribute("data-q", e.target.value); render(lastRows); });
+
+    var all = function(q){ return [].slice.call(host.querySelectorAll(q)); };
+    var list = host.querySelector(".fp-list");
+    function clear(){
+      all(".on").forEach(function(e){ e.classList.remove("on"); });
+      all(".fp-pop.show").forEach(function(p){ p.classList.remove("show"); p.innerHTML = ""; });
     }
-    [].forEach.call(host.querySelectorAll(".fp-pin,.fp-item[data-i]"), function(el){
-      var i = el.getAttribute("data-i");
-      el.addEventListener("click", function(){ select(i); });
-      el.addEventListener("mouseenter", function(){ select(i); });
-      el.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); select(i); } });
+    function reveal(el){ if(el && list.scrollHeight > list.clientHeight + 2) list.scrollTop = Math.max(0, el.offsetTop - 8); }
+    function selRoom(id, pop){
+      clear();
+      var rm = host.querySelector('.fp-rm[data-room="' + id + '"]'); if(rm) rm.classList.add("on");
+      var its = all('.fp-list .fp-item[data-room="' + id + '"]');
+      its.forEach(function(e){ e.classList.add("on"); }); reveal(its[0]);
+      if(pop){
+        var r = roomById[id], p = host.querySelector('.fp-pop[data-zone="' + r.z + '"]');
+        p.innerHTML = '<div class="fp-pop-h"><span>' + esc(r.name) + '</span><button type="button" aria-label="Close">Close</button></div>' +
+          byRoom[id].map(function(c){ return item(c, r.name, "div"); }).join("");
+        p.classList.add("show");
+        p.querySelector("button").addEventListener("click", clear);
+      }
+    }
+    function selItem(i){
+      clear();
+      var c = placed[i]; if(!c) return;
+      all('.fp-list .fp-item[data-i="' + i + '"], .fp-rm .fp-b[data-i="' + i + '"]').forEach(function(e){ e.classList.add("on"); });
+      var rm = host.querySelector('.fp-rm[data-room="' + c._room.id + '"]'); if(rm) rm.classList.add("on");
+    }
+    all(".fp-rm.act").forEach(function(el){
+      var id = el.getAttribute("data-room");
+      el.addEventListener("click", function(){ selRoom(id, true); });
+      el.addEventListener("keydown", function(e){ if(e.key === "Enter" || e.key === " "){ e.preventDefault(); selRoom(id, true); } });
+    });
+    all(".fp-list .fp-item[data-i]").forEach(function(el){
+      var i = +el.getAttribute("data-i");
+      el.addEventListener("mouseenter", function(){ selItem(i); });
+      el.addEventListener("focus", function(){ selItem(i); });
+      el.addEventListener("click", function(){ selItem(i); });
     });
   }
 
   window.EBCFloorplan = {
-    render: render, rooms: ROOMS, findRoom: findRoom,
+    render: render, rooms: ROOMS, zones: ZONES, findRoom: findRoom,
     kids: function(){ return PLAN.kids; },
     refresh: function(){
       try { document.dispatchEvent(new CustomEvent("ebc:plan")); } catch(e) {}
       if(lastRows) render(lastRows);
     },
-    // Used by planner.html: same room list, capacities and headcount rules as the map
+    // Used by dashboard.js (kids) and planner.html (rooms, capacity, headcount)
     capacityOf: capacityOf, headcountOfRow: headcountOfRow, parseCSV: parseCSV, findRoomByLoc: findRoom,
     urls: { kids: KIDS_CSV_URL, demo: DEMO_CSV_URL, rooms: ROOMS_CSV_URL }
   };

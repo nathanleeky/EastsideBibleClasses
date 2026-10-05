@@ -3,7 +3,7 @@
 Live dashboard of Eastside Church of Christ Bible classes, fed from the Master Tracker Google Sheet.
 
 - `dashboard.js` – the whole dashboard (styles, layout, data loading). Reads the "Master: Adult" tab.
-- `floorplan.js` – the "Where Classes Meet" floor plan map. Room shapes and the names that match the sheet's Location column live in the `ROOMS` list at the top. Optionally also reads "Master: Kids", "Kid Demographics" and a "Rooms" tab (see below) to show headcount, capacity and planning-status.
+- `floorplan.js` – the "Where Classes Meet" floor plan map. The map is drawn as areas (West Wing, 2nd Floor, Auditorium, Annex, Apartment) that reflow from desktop to phone. Room shapes and the names that match the sheet's Location column live in the `ROOMS` list at the top. Optionally also reads "Master: Kids", "Kid Demographics" and a "Rooms" tab (see below) to show headcount, capacity and planning-status.
 - `planner.html`, `planner.js`, `planner.css` – the room planner (see below). Reuses the room list, capacities and headcount rules from `floorplan.js`.
 - `apps-script/Code.gs` – the small Google Apps Script that saves room assignments back to the sheet.
 - `index.html` – preview page: https://nathanleeky.github.io/EastsideBibleClasses/
