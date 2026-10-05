@@ -247,14 +247,16 @@
     var html = '<section class="summary" aria-label="Progress"><div class="line">' + head + '</div><div class="bar"><span style="width:' + pct + '%"></span></div></section>';
     function chip(k, label, n){ return '<button class="chip" data-do="filter" data-f="' + k + '" aria-pressed="' + (state.filter === k) + '">' + label + ' <i>' + n + '</i></button>'; }
     html += '<div class="chips" role="group" aria-label="Filter">' + chip("all", "All", list.length) + chip("need", "Needs a room", need.length) + chip("placed", "Placed", placed.length) + '</div>' + addBtn;
+    html += '<div class="cols">';
     if(state.filter !== "placed"){
-      html += '<div class="sec-h"><h2>Needs a room</h2><span>' + need.length + '</span></div>';
-      html += need.length ? '<div class="group">' + need.map(classRow).join("") + '</div>' : '<div class="group"><p class="empty">Every class has a room.</p></div>';
+      html += '<div class="col"><div class="sec-h"><h2>Needs a room</h2><span>' + need.length + '</span></div>';
+      html += (need.length ? '<div class="group">' + need.map(classRow).join("") + '</div>' : '<div class="group"><p class="empty">Every class has a room.</p></div>') + '</div>';
     }
     if(state.filter !== "need"){
-      html += '<div class="sec-h"><h2>Placed</h2><span>' + placed.length + '</span></div>';
-      html += placed.length ? '<div class="group">' + placed.map(classRow).join("") + '</div>' : '<div class="group"><p class="empty">Nothing placed yet. Tap a class to pick a room.</p></div>';
+      html += '<div class="col"><div class="sec-h"><h2>Placed</h2><span>' + placed.length + '</span></div>';
+      html += (placed.length ? '<div class="group">' + placed.map(classRow).join("") + '</div>' : '<div class="group"><p class="empty">Nothing placed yet. Tap a class to pick a room.</p></div>') + '</div>';
     }
+    html += '</div>';
     return html;
   }
 
